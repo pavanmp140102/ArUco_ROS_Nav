@@ -34,12 +34,14 @@ sudo apt install ros-jazzy-rqt-tf-tree ros-jazzy-plotjuggler-ros
 
 To use `ccache` with colcon, add `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` to `--cmake-args`.
 
-## Leave alone
+## Environment this project was built on
 
-| Item | Recommendation | Reason |
+The project was developed and tested with the versions below. They describe that setup, not requirements for yours; other versions may work but were not tried.
+
+| Item | Used in development | Notes |
 |---|---|---|
-| OpenCV | Stay on the Ubuntu packages, version 4.6.0. Do not build from source and do not `pip install opencv-python` | `cv_bridge` on Jazzy links against 4.6. Two OpenCV versions in one process cause crashes that are hard to diagnose. The design already handles the 4.6 ArUco API |
-| CUDA, cuDNN, TensorRT, PyTorch | Do not install | Nothing in this project uses them. ArUco detection on a 1280x720 frame takes roughly 10 ms on a CPU, well inside the 33 ms between frames. OpenCV from apt has no CUDA support, so using the GPU would require the source build ruled out above |
+| OpenCV | Ubuntu 24.04 packages, 4.6.0 | `cv_bridge` on Jazzy links against the system OpenCV, so the detector uses the system copy too and mixing in a second OpenCV (source build, `pip install opencv-python`) can cause hard-to-diagnose crashes. The code selects the legacy or the newer ArUco API at compile time, so it also builds against newer OpenCV |
+| CUDA, cuDNN, TensorRT, PyTorch | Not installed | Nothing in this project uses them. ArUco detection on a 1280x720 frame took roughly 10 ms on a CPU, well inside the 33 ms between frames |
 
 ## Graphics
 
