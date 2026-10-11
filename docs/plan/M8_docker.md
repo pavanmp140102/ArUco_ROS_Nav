@@ -59,7 +59,7 @@ Showing windows on the host requires allowing local containers to use the displa
 - [x] `.dockerignore`: `build/`, `install/`, `log/`, `.git/`, `docs/images/`, editor folders.
 - [x] `docker/Dockerfile`, stage `base`: `ros:jazzy-ros-base`, copy only `src/**/package.xml`, `rosdep install --from-paths src --ignore-src -y`, add `xvfb` and `mesa-utils`, clean the apt lists.
 - [x] Stage `runtime`: copy `src/`, `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release`, keep `build/` so tests can run.
-- [ ] Stage `dev`: development tools, non-root user created from `UID` and `GID` build arguments, `ccache` directory as a volume.
+- [x] Stage `dev`: development tools, non-root user created from `UID` and `GID` build arguments, `ccache` directory as a volume.
 - [x] `docker/entrypoint.sh`: sources `/opt/ros/jazzy/setup.bash` and the workspace's `install/setup.bash` when present, then runs the given command.
 - [ ] Pin the base image by digest once the image is known to work, and record the digest and date in [../setup.md](../setup.md).
 

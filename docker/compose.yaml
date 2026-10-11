@@ -32,5 +32,9 @@ services:
     working_dir: /ws
     volumes:
       - ..:/ws
+      - ccache:/home/dev/.ccache
     stdin_open: true
     tty: true
+
+volumes:
+  ccache:

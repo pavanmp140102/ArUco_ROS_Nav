@@ -4,19 +4,26 @@
 #   runtime : base plus the source tree built in Release mode
 ARG ROS_IMAGE=ros:jazzy-ros-base
 
+# Keeps only the package.xml files. The next stage copies from here, so its cache key depends
+# on the manifests alone and editing source files does not rerun the dependency install.
+FROM ${ROS_IMAGE} AS manifests
+COPY src/ /src/
+RUN find /src -type f ! -name package.xml -delete
+
 FROM ${ROS_IMAGE} AS base
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 WORKDIR /ws
 
-# Dependencies come first and only from the manifests, so editing source reuses this layer
-# and a key missing from a package.xml fails the build here instead of going unnoticed.
-COPY src/ /tmp/src_manifests/
-RUN find /tmp/src_manifests -type f ! -name package.xml -delete \
+# Dependencies come first and only from the manifests, so a key missing from a package.xml
+# fails the build here instead of going unnoticed. rosdep reads the <depend> tags; the scratch
+# copy is deleted afterwards and the real source is added in the runtime stage.
+COPY --from=manifests /src/ /tmp/src_manifests/
+RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/90norecommends \
     && apt-get update \
     && rosdep update --rosdistro "${ROS_DISTRO}" \
     && rosdep install --from-paths /tmp/src_manifests --ignore-src -y --rosdistro "${ROS_DISTRO}" \
-    && apt-get install -y --no-install-recommends xvfb mesa-utils \
+    && apt-get install -y xvfb mesa-utils \
     && rm -rf /tmp/src_manifests /var/lib/apt/lists/*
 
 COPY docker/entrypoint.sh /entrypoint.sh
@@ -36,7 +43,10 @@ RUN apt-get update \
     && useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash dev \
     && echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev \
     && mkdir -p /home/dev/.ccache && chown -R dev:dev /home/dev /ws
-ENV CCACHE_DIR=/home/dev/.ccache
+# CMake reads these, so every colcon build in the dev container goes through ccache.
+ENV CCACHE_DIR=/home/dev/.ccache \
+    CMAKE_C_COMPILER_LAUNCHER=ccache \
+    CMAKE_CXX_COMPILER_LAUNCHER=ccache
 VOLUME /home/dev/.ccache
 USER dev
 
