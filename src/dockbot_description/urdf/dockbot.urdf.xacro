@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<!--
+  Copyright 2026 Pavan Patil
+  SPDX-License-Identifier: Apache-2.0
+
+  dockbot: a small differential-drive robot with a mast-mounted camera.
+  The camera sits 0.20 m behind the front face so the whole marker is visible at the
+  10 cm docking distance. base_link is at axle height; the front face is 0.15 m ahead of it.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dockbot">
+
+  <!-- Camera sensor settings; the detector reads intrinsics from CameraInfo, not from here. -->
+  <xacro:arg name="camera_width" default="1280"/>
+  <xacro:arg name="camera_height" default="720"/>
+  <xacro:arg name="camera_fov" default="1.0856"/>
+  <xacro:arg name="camera_rate" default="30"/>
+
+  <xacro:property name="chassis_l" value="0.30"/>
+  <xacro:property name="chassis_w" value="0.24"/>
+  <xacro:property name="chassis_h" value="0.08"/>
+  <xacro:property name="chassis_mass" value="2.4"/>
+  <xacro:property name="wheel_r" value="0.04"/>
+  <xacro:property name="wheel_w" value="0.02"/>
+  <xacro:property name="wheel_sep" value="0.26"/>
+  <xacro:property name="wheel_mass" value="0.15"/>
+  <xacro:property name="caster_r" value="0.02"/>
+  <xacro:property name="caster_mass" value="0.05"/>
+  <xacro:property name="caster_x" value="0.12"/>
+  <xacro:property name="mast_h" value="0.10"/>
+  <xacro:property name="mast_s" value="0.02"/>
+  <xacro:property name="mast_mass" value="0.10"/>
+  <xacro:property name="cam_mass" value="0.05"/>
+  <xacro:property name="cam_x" value="-0.05"/>
+  <xacro:property name="cam_z" value="0.16"/>
+
+  <!-- Inertia of a solid box, used for the chassis and the mast so the physics is stable. -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
+               iyy="${m*(x*x+z*z)/12}" iyz="0" izz="${m*(x*x+y*y)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Inertia of a solid cylinder about its own axis, used for the drive wheels. -->
+  <xacro:macro name="cylinder_inertia" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0" ixz="0"
+               iyy="${m*(3*r*r+h*h)/12}" iyz="0" izz="${m*r*r/2}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Inertia of a solid sphere, used for the frictionless casters. -->
+  <xacro:macro name="sphere_inertia" params="m r">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${2*m*r*r/5}" ixy="0" ixz="0"
+               iyy="${2*m*r*r/5}" iyz="0" izz="${2*m*r*r/5}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- One drive wheel; the side sign puts it left (+1) or right (-1) of the centre axle. -->
+  <xacro:macro name="wheel" params="name side">
+    <link name="${name}_link">
+      <visual>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_w}"/></geometry>
+        <material name="dark"><color rgba="0.1 0.1 0.1 1"/></material>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_w}"/></geometry>
+      </collision>
+      <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_r}" h="${wheel_w}"/>
+    </link>
+    <joint name="${name}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="0 ${side*wheel_sep/2} 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+    <gazebo reference="${name}_link">
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- One frictionless caster ball; the sign puts it ahead of (+1) or behind (-1) the axle. -->
+  <xacro:macro name="caster" params="name front">
+    <link name="${name}_link">
+      <visual>
+        <geometry><sphere radius="${caster_r}"/></geometry>
+        <material name="dark"/>
+      </visual>
+      <collision>
+        <geometry><sphere radius="${caster_r}"/></geometry>
+      </collision>
+      <xacro:sphere_inertia m="${caster_mass}" r="${caster_r}"/>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${front*caster_x} 0 ${caster_r-wheel_r}"/>
+    </joint>
+    <gazebo reference="${name}_link">
+      <mu1>0.0</mu1>
+      <mu2>0.0</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Ground-level frame that odometry is published for. -->
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${wheel_r}"/>
+  </joint>
+
+  <!-- base_link: axle centre; the chassis rides 2 cm above the ground. -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${0.02}"/>
+      <geometry><box size="${chassis_l} ${chassis_w} ${chassis_h}"/></geometry>
+      <material name="blue"><color rgba="0.1 0.3 0.8 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${0.02}"/>
+      <geometry><box size="${chassis_l} ${chassis_w} ${chassis_h}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${0.02}"/>
+      <mass value="${chassis_mass}"/>
+      <inertia ixx="${chassis_mass*(chassis_w*chassis_w+chassis_h*chassis_h)/12}" ixy="0" ixz="0"
+               iyy="${chassis_mass*(chassis_l*chassis_l+chassis_h*chassis_h)/12}" iyz="0"
+               izz="${chassis_mass*(chassis_l*chassis_l+chassis_w*chassis_w)/12}"/>
+    </inertial>
+  </link>
+
+  <xacro:wheel name="wheel_left" side="1"/>
+  <xacro:wheel name="wheel_right" side="-1"/>
+  <xacro:caster name="caster_front" front="1"/>
+  <xacro:caster name="caster_rear" front="-1"/>
+
+  <!-- Mast carrying the camera from the chassis top (0.10 m) up to 0.20 m above the ground. -->
+  <link name="mast_link">
+    <visual>
+      <geometry><box size="${mast_s} ${mast_s} ${mast_h}"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <geometry><box size="${mast_s} ${mast_s} ${mast_h}"/></geometry>
+    </collision>
+    <xacro:box_inertia m="${mast_mass}" x="${mast_s}" y="${mast_s}" z="${mast_h}"/>
+  </link>
+  <joint name="mast_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="mast_link"/>
+    <origin xyz="${cam_x} 0 0.11"/>
+  </joint>
+
+  <!-- camera_link: x forward, the body frame of the camera. -->
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.02 0.05 0.02"/></geometry>
+      <material name="black"><color rgba="0 0 0 1"/></material>
+    </visual>
+    <xacro:box_inertia m="${cam_mass}" x="0.02" y="0.05" z="0.02"/>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="${cam_x} 0 ${cam_z}"/>
+  </joint>
+
+  <!-- camera_optical_frame: z forward, x right, y down, as image-based vision expects. -->
+  <link name="camera_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+    <origin rpy="${-pi/2} 0 ${-pi/2}"/>
+  </joint>
+
+  <gazebo>
+    <!-- Drives from cmd_vel and publishes odom and the odom -> base_footprint transform. -->
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>wheel_left_joint</left_joint>
+      <right_joint>wheel_right_joint</right_joint>
+      <wheel_separation>${wheel_sep}</wheel_separation>
+      <wheel_radius>${wheel_r}</wheel_radius>
+      <topic>cmd_vel</topic>
+      <odom_topic>odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+      <odom_publisher_frequency>30</odom_publisher_frequency>
+      <tf_topic>/tf</tf_topic>
+    </plugin>
+    <!-- Wheel joint angles, so robot_state_publisher can place the wheels. -->
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+      <topic>joint_states</topic>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="camera_link">
+    <sensor name="camera" type="camera">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>$(arg camera_rate)</update_rate>
+      <topic>camera/image_raw</topic>
+      <gz_frame_id>camera_optical_frame</gz_frame_id>
+      <camera>
+        <horizontal_fov>$(arg camera_fov)</horizontal_fov>
+        <image>
+          <width>$(arg camera_width)</width>
+          <height>$(arg camera_height)</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip><near>0.05</near><far>20.0</far></clip>
+      </camera>
+    </sensor>
+  </gazebo>
+
+</robot>
