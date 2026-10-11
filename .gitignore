@@ -1,0 +1,11 @@
+build/
+install/
+log/
+__pycache__/
+*.pyc
+
+# Local-only files
+CLAUDE.md
+claude.md
+.claude/
+docs/dev_machine.md
