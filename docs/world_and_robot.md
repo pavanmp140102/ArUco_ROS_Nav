@@ -14,6 +14,8 @@ Dimensions here are the design targets. The Xacro, the world file, and `config/m
 | Drive | Gazebo `gz-sim-diff-drive-system`, subscribing to `cmd_vel`, publishing `odom` and its TF |
 | Joint states | Gazebo `gz-sim-joint-state-publisher-system` |
 
+![dockbot side view](images/robot_side_view.png)
+
 ### Camera
 
 | Property | Value |
@@ -69,6 +71,10 @@ A marker texture that ends up mirrored is not a valid ArUco code and will never 
 ## Worlds
 
 Two worlds, both in `dockbot_gazebo/worlds/`.
+
+![docking_world plan view](images/world_layout.png)
+
+![docking_world in Gazebo](images/gazebo_world.png)
 
 ### `single_dock.sdf`
 

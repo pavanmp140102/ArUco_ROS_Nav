@@ -23,3 +23,12 @@ Design and planning documents for the ArUco autonomous docking simulation (ROS 2
 ## Conventions
 
 Every function carries a description of what it does and how it serves the docking goal.
+
+## Figures
+
+The images in [images/](images/) are generated, not hand-drawn:
+
+- `world_layout.png`, `robot_side_view.png`, `pipeline.png`: `python3 docs/images/generate_diagrams.py` (the world plan is read from `docking_world.sdf` and `markers.yaml`, so it follows the simulation).
+- `gazebo_world.png`, `gazebo_robot.png`: rendered by extra static cameras in the headless simulator (same renderer as the GUI, without the window).
+- `rviz.png`: a screenshot of RViz with `rviz/dockbot.rviz`.
+- `camera_view.png`: one frame from `/camera/image_raw` with the robot 1.5 m in front of marker 4.
