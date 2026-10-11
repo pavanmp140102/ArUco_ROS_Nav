@@ -18,7 +18,7 @@ Geometry and camera values are in [../world_and_robot.md](../world_and_robot.md)
 - [x] `rviz/dockbot.rviz`: robot model, TF, camera image, odometry.
 - [x] Static test running `xacro` and `check_urdf`.
 - [x] Headless check: launch with `headless:=true`, confirm `/camera/image_raw` publishes non-black frames. Record the result in the risk table of [README.md](README.md).
-- [ ] GPU comparison: with `gpu:=intel` and `gpu:=nvidia`, with and without `headless`, record the real-time factor and the camera rate, and confirm with `nvtop` which GPU did the rendering. Make the better one the default and note the numbers in [../setup.md](../setup.md).
+- [x] GPU comparison: with `gpu:=intel` and `gpu:=nvidia`, with and without `headless`, record the real-time factor and the camera rate, and confirm with `nvtop` which GPU did the rendering. Make the better one the default and note the numbers in [../setup.md](../setup.md).
 
 ## Files created
 
@@ -34,7 +34,7 @@ src/dockbot_gazebo/launch/sim.launch.py
 ## Gate
 
 - S3 for the robot model.
-- MAN3: teleoperation (`teleop_twist_keyboard` with stamped output) drives the robot straight and turns it in place.
+- MAN3: teleoperation (`teleop_twist_keyboard` with stamped output) drives the robot straight and turns it in place. Checked by hand on 2026-10-11 in the Gazebo GUI: the robot drives and turns as expected, and the RViz odometry arrow follows the motion correctly.
 - `ros2 run tf2_ros tf2_echo base_link camera_optical_frame` shows translation (-0.05, 0, 0.16) and the optical rotation.
 - `ros2 topic hz /camera/image_raw` reports about 30 Hz, and `/camera/camera_info` reports 1280x720 with `fx` near 1061.
 - Headless check passes, or the fallback is documented.
