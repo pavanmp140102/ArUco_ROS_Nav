@@ -8,17 +8,17 @@ Layout and marker specification are in [../world_and_robot.md](../world_and_robo
 
 ## Sub-tasks
 
-- [ ] `scripts/generate_markers.py`: writes `DICT_4X4_50` IDs 0 to 4 as PNGs with the white quiet zone included (0.15 m code on a 0.20 m plate, so the code is 75% of the image side). Works on OpenCV 4.6 (`drawMarker`) and newer (`generateImageMarker`).
-- [ ] Commit the generated PNGs.
-- [ ] One model per ID under `models/aruco_marker_<id>/`: `model.config`, `model.sdf` (static thin box, PBR albedo map, matte), and the texture.
-- [ ] `models/dock_stand/`: a simple post to carry a free-standing marker.
-- [ ] `config/markers.yaml` as specified.
-- [ ] `worlds/single_dock.sdf`: ground, light, one marker (ID 0) on a stand.
-- [ ] `worlds/docking_world.sdf`: 7 m by 7 m walled room, five markers at the `markers.yaml` poses, boxes and pillars as obstacles, clear corridor in front of each marker.
-- [ ] Place one pillar so that a documented spawn pose has its view of one marker interrupted during approach (for E7). Record that spawn pose in the E7 scenario notes.
-- [ ] Static test S4 comparing the world file with `markers.yaml`.
-- [ ] Static test running `gz sdf -k` on every world and model.
-- [ ] Update the layout table in [../world_and_robot.md](../world_and_robot.md) with final obstacle positions.
+- [x] `scripts/generate_markers.py`: writes `DICT_4X4_50` IDs 0 to 4 as PNGs with the white quiet zone included (0.15 m code on a 0.20 m plate, so the code is 75% of the image side). Works on OpenCV 4.6 (`drawMarker`) and newer (`generateImageMarker`).
+- [x] Commit the generated PNGs.
+- [x] One model per ID under `models/aruco_marker_<id>/`: `model.config`, `model.sdf` (static thin box, PBR albedo map, matte), and the texture.
+- [x] `models/dock_stand/`: a simple post to carry a free-standing marker.
+- [x] `config/markers.yaml` as specified.
+- [x] `worlds/single_dock.sdf`: ground, light, one marker (ID 0) on a stand.
+- [x] `worlds/docking_world.sdf`: 7 m by 7 m walled room, five markers at the `markers.yaml` poses, boxes and pillars as obstacles, clear corridor in front of each marker.
+- [x] Place one pillar so that a documented spawn pose has its view of one marker interrupted during approach (for E7). Record that spawn pose in the E7 scenario notes.
+- [x] Static test S4 comparing the world file with `markers.yaml`.
+- [x] Static test running `gz sdf -k` on every world and model.
+- [x] Update the layout table in [../world_and_robot.md](../world_and_robot.md) with final obstacle positions.
 
 ## Files created
 

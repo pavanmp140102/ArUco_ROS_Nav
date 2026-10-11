@@ -17,11 +17,15 @@ project(dockbot_gazebo)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY worlds models config launch scripts DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY worlds models config launch DESTINATION share/${PROJECT_NAME})
+install(PROGRAMS scripts/generate_markers.py DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_sdf_valid test/test_sdf_valid.py)
+  ament_add_pytest_test(test_marker_poses test/test_marker_poses.py)
 endif()
 
 ament_package()

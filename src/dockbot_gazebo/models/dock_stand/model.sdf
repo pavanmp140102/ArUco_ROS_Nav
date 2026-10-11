@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!-- Copyright 2026 Pavan Patil, SPDX-License-Identifier: Apache-2.0
+     Post behind a marker plate. Use the same pose as the marker (origin at the face centre,
+     marker height 0.20 m), so the post runs from the floor (z = -0.20) to the plate top. -->
+<sdf version="1.9">
+  <model name="dock_stand">
+    <static>true</static>
+    <link name="link">
+      <visual name="post">
+        <pose>-0.10 0 -0.05 0 0 0</pose>
+        <geometry><box><size>0.10 0.25 0.30</size></box></geometry>
+        <material>
+          <ambient>0.35 0.35 0.4 1</ambient>
+          <diffuse>0.35 0.35 0.4 1</diffuse>
+          <specular>0 0 0 1</specular>
+        </material>
+      </visual>
+      <collision name="post_collision">
+        <pose>-0.10 0 -0.05 0 0 0</pose>
+        <geometry><box><size>0.10 0.25 0.30</size></box></geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

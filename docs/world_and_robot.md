@@ -90,7 +90,21 @@ IDs 0 and 1 sit side by side on purpose: both are in view at once, which tests t
 
 Obstacles are static boxes and cylindrical pillars placed between and beside the docking corridors. They make the scene realistic, block some lines of sight from some spawn positions, and give the detector non-marker clutter to reject. They are kept off the straight corridor in front of each marker.
 
-The layout above is the design target. Exact obstacle positions are settled in M2, with one pillar placed so that a specific spawn pose has its view of a marker interrupted mid-approach (test E7).
+Final obstacle layout in `docking_world.sdf` (centres in metres; the room is 7 m by 7 m with walls 1 m tall):
+
+| Name | Shape | Position (x, y) | Size |
+|---|---|---|---|
+| `box_a` | Box | (2.6, -1.2) | 0.6 x 0.6 x 0.5 |
+| `box_b` | Box | (-2.4, 1.8) | 0.5 x 0.8 x 0.5 |
+| `box_c` | Box | (-0.5, -2.5) | 0.4 x 0.4 x 0.5 |
+| `pillar_1` | Cylinder | (0.5, 2.5) | radius 0.2, height 0.8 |
+| `pillar_occluder` | Cylinder | (0.25, 1.975) | radius 0.15, height 0.6 |
+
+Markers sit on 0.05 m thick plates. Walls carry markers 0 to 3 directly. Marker 4 stands on a `dock_stand` post. `single_dock.sdf` has marker 0 on a stand at (3.0, 0.0) facing -x.
+
+`pillar_occluder` lies on the line of sight from (2.0, 0.5) to marker 2. A robot placed at (2.0, 0.5) with yaw 2.44 rad does not see marker 2 (checked with plain OpenCV detection on a camera frame), while from the default spawn at the origin the marker is visible. That pose is the starting candidate for test E7; the final E7 spawn is settled in M5, once the controller's path is known.
+
+The default spawn sees every marker by turning in place, and each is detected by plain OpenCV on a camera frame. Marker plates are white, but the scene is lit with ambient light of 0.9, so they render light grey; detection is unaffected.
 
 ### `config/markers.yaml`
 
