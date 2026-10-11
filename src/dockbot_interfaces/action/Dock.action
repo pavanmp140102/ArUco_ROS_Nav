@@ -1,0 +1,21 @@
+# Goal
+int32 marker_id            # ArUco ID of the docking station to dock at
+float32 dock_distance      # metres, front face to marker plane. 0.0 means use the node parameter
+float32 timeout            # seconds. 0.0 means use the node parameter
+---
+# Result
+uint8 OUTCOME_DOCKED=0
+uint8 OUTCOME_TARGET_NOT_FOUND=1
+uint8 OUTCOME_TARGET_LOST=2
+uint8 OUTCOME_RETRIES_EXCEEDED=3
+uint8 OUTCOME_TIMEOUT=4
+uint8 OUTCOME_CANCELED=5
+bool success
+uint8 outcome
+string message
+float32 final_distance         # front face to marker plane, as measured by the camera
+float32 final_lateral_error
+float32 final_heading_error
+---
+# Feedback
+DockingState state
