@@ -20,7 +20,8 @@ Visualization Manager:
     - Class: rviz_default_plugins/TF
       Name: TF
       Enabled: true
-      Show Names: true
+      Show Names: false
+      Marker Scale: 0.3
     - Class: rviz_default_plugins/Image
       Name: Camera
       Enabled: true
@@ -32,10 +33,17 @@ Visualization Manager:
       Enabled: true
       Topic:
         Value: /odom
-      Keep: 100
+      Keep: 1
+      Shape:
+        Value: Arrow
+        Alpha: 0.5
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4
-      Pitch: 0.7
-      Yaw: 3.0
+      Distance: 1.6
+      Pitch: 0.55
+      Yaw: 3.6
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0.1

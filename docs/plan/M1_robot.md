@@ -15,7 +15,7 @@ Geometry and camera values are in [../world_and_robot.md](../world_and_robot.md)
 - [x] `worlds/empty.sdf` with ground plane, light, and the Physics, SceneBroadcaster, UserCommands, and Sensors (`ogre2`) systems.
 - [x] `launch/sim.launch.py`: Gazebo server, optional GUI, `robot_state_publisher` from the processed Xacro, `ros_gz_sim create` reading `robot_description`, `parameter_bridge`, `image_bridge`. Arguments `world`, `x`, `y`, `yaw`, `headless`, `gpu`. Appends the package's `models/` directory to `GZ_SIM_RESOURCE_PATH`.
 - [x] `gpu` argument (`intel`, `nvidia` or `software`): `nvidia` sets `__NV_PRIME_RENDER_OFFLOAD=1` and `__GLX_VENDOR_LIBRARY_NAME=nvidia` for the Gazebo processes. See [../setup.md](../setup.md).
-- [ ] `rviz/dockbot.rviz`: robot model, TF, camera image, odometry.
+- [x] `rviz/dockbot.rviz`: robot model, TF, camera image, odometry.
 - [x] Static test running `xacro` and `check_urdf`.
 - [x] Headless check: launch with `headless:=true`, confirm `/camera/image_raw` publishes non-black frames. Record the result in the risk table of [README.md](README.md).
 - [ ] GPU comparison: with `gpu:=intel` and `gpu:=nvidia`, with and without `headless`, record the real-time factor and the camera rate, and confirm with `nvtop` which GPU did the rendering. Make the better one the default and note the numbers in [../setup.md](../setup.md).
