@@ -1,0 +1,36 @@
+# Services for building, testing and developing the project (see docs/plan/M8_docker.md).
+# sim, sim-nvidia and test-e2e are added as M1 and M5 land.
+x-common: &common
+  environment:
+    ROS_DOMAIN_ID: "42"
+    QT_X11_NO_MITSHM: "1"
+  ipc: host
+
+services:
+  test:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runtime
+    image: dockbot:runtime
+    command: >
+      bash -c "colcon test --packages-select dockbot_perception dockbot_docking
+      dockbot_gazebo dockbot_description dockbot_interfaces
+      && colcon test-result --verbose"
+
+  dev:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: dockbot:dev
+    working_dir: /ws
+    volumes:
+      - ..:/ws
+    stdin_open: true
+    tty: true
