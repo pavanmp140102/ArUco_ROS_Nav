@@ -10,16 +10,16 @@ Design is in section 6 of [../architecture.md](../architecture.md); the interfac
 
 ### Library `pose_estimation` (OpenCV and Eigen only, no ROS headers)
 
-- [ ] `get_dictionary(name)`: dictionary lookup by name, throwing a clear error for unknown names.
-- [ ] `detect_markers(gray, dictionary)`: the wrapper over the two OpenCV API generations, selected at compile time on `CV_VERSION`, returning corners and IDs in one struct.
-- [ ] `estimate_marker_pose(corners, marker_size, K, dist)`: `cv::solvePnPGeneric` with `cv::SOLVEPNP_IPPE_SQUARE`; returns the better solution as an `Eigen::Isometry3d` with its reprojection error.
-- [ ] `transform_pose(T_optical_marker, T_base_optical)`: optical frame to base frame.
-- [ ] `range_and_bearing(position)`: ground-plane range and bearing.
-- [ ] `draw_debug(image, detections, K, dist)`: outlines, IDs, axes.
+- [x] `get_dictionary(name)`: dictionary lookup by name, throwing a clear error for unknown names.
+- [x] `detect_markers(gray, dictionary)`: the wrapper over the two OpenCV API generations, selected at compile time on `CV_VERSION`, returning corners and IDs in one struct.
+- [x] `estimate_marker_pose(corners, marker_size, K, dist)`: `cv::solvePnPGeneric` with `cv::SOLVEPNP_IPPE_SQUARE`; returns the better solution as an `Eigen::Isometry3d` with its reprojection error.
+- [x] `transform_pose(T_optical_marker, T_base_optical)`: optical frame to base frame.
+- [x] `range_and_bearing(position)`: ground-plane range and bearing.
+- [x] `draw_debug(image, detections, K, dist)`: outlines, IDs, axes.
 
 ### Test support
 
-- [ ] `test/synthetic_marker.hpp`: renders a marker into an image at a given pose and intrinsics, for the P tests and for PN1.
+- [x] `test/synthetic_marker.hpp`: renders a marker into an image at a given pose and intrinsics, for the P tests and for PN1.
 
 ### Node `ArucoDetector` (`rclcpp::Node`, registered as a component)
 
@@ -34,7 +34,7 @@ Design is in section 6 of [../architecture.md](../architecture.md); the interfac
 
 ### Tests (`ament_cmake_gtest`)
 
-- [ ] `test_pose_estimation.cpp`: P1 to P8.
+- [x] `test_pose_estimation.cpp`: P1 to P8.
 - [ ] `test_detector_node.cpp`: PN1 to PN4, creating the node and test publishers in one process and spinning an executor.
 - [ ] E10 scenario in `dockbot_bringup` once M2 exists.
 
@@ -56,7 +56,10 @@ src/dockbot_perception/test/{synthetic_marker.hpp,test_pose_estimation.cpp,test_
 
 ## Notes
 
-- Corner order matters for `IPPE_SQUARE`: object points must be top-left, top-right, bottom-right, bottom-left, with the marker's y axis up. Getting this wrong flips the normal; P6 and P8 catch it.
+- Corner order matters: object points must be top-left, top-right, bottom-right, bottom-left. Getting this wrong flips the normal; P6 and P8 catch it.
+- The library solves with `SOLVEPNP_IPPE` on corners in a y-down frame, not `IPPE_SQUARE` on y-up corners (OpenCV's usual marker frame). A marker seen face-on is then the identity rotation instead of exactly pi, where OpenCV 4.6's rotation vector comes back as zero and the pose is wrong, which would hit the robot exactly when it is docked. The result is flipped to the documented frame (y up, z out of the face) before it is returned. `IPPE_SQUARE` rejects y-down corners.
+- Sub-pixel corner refinement is done in the library, with a window scaled to the marker's apparent cell size. OpenCV's fixed 5 px window is wider than a cell beyond about 5 m and biased the range by 5 to 7% at 6 m; the scaled window keeps it near 1%.
+- Solutions whose printed face points away from the camera, or that lie behind it, are rejected as physically impossible before the lower reprojection error is chosen.
 - Simulated cameras have zero distortion, but pass the distortion vector through anyway so the node works with a real camera.
 - Do not filter in the detector. It reports what it sees; smoothing belongs to the controller.
 - The image callback does all the work on the executor thread. At 30 Hz (a 33 ms budget) and roughly 10 ms per 1280x720 frame that is fine; no extra threads are needed.

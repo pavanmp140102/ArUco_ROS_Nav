@@ -42,6 +42,9 @@ add_library(pose_estimation STATIC src/pose_estimation.cpp)
 target_include_directories(pose_estimation PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_include_directories(pose_estimation SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(pose_estimation PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
+set_target_properties(pose_estimation PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS pose_estimation EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
@@ -51,6 +54,11 @@ install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_pose_estimation test/test_pose_estimation.cpp)
+  target_include_directories(test_pose_estimation PRIVATE test)
+  target_link_libraries(test_pose_estimation pose_estimation)
 endif()
 
 ament_export_include_directories(include/${PROJECT_NAME})
