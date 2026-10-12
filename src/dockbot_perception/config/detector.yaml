@@ -1,0 +1,12 @@
+aruco_detector:
+  ros__parameters:
+    use_sim_time: true
+    image_topic: /camera/image_raw
+    camera_info_topic: /camera/camera_info
+    dictionary: DICT_4X4_50
+    marker_size: 0.15
+    base_frame: base_link
+    max_reprojection_error: 2.0
+    publish_tf: true
+    tf_prefix: aruco_
+    publish_debug_image: true

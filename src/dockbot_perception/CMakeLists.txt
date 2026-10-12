@@ -46,6 +46,22 @@ target_include_directories(pose_estimation SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(pose_estimation PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
 set_target_properties(pose_estimation PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+add_library(aruco_detector_component SHARED src/aruco_detector.cpp)
+target_include_directories(aruco_detector_component PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_link_libraries(aruco_detector_component PUBLIC pose_estimation)
+ament_target_dependencies(aruco_detector_component PUBLIC
+  rclcpp rclcpp_components cv_bridge tf2_ros sensor_msgs geometry_msgs dockbot_interfaces)
+rclcpp_components_register_nodes(aruco_detector_component "dockbot_perception::ArucoDetector")
+
+add_executable(aruco_detector src/aruco_detector_main.cpp)
+target_link_libraries(aruco_detector aruco_detector_component)
+
+install(TARGETS aruco_detector_component
+  ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS aruco_detector DESTINATION lib/${PROJECT_NAME})
+
 install(TARGETS pose_estimation EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME} OPTIONAL)
@@ -59,6 +75,10 @@ if(BUILD_TESTING)
   ament_add_gtest(test_pose_estimation test/test_pose_estimation.cpp)
   target_include_directories(test_pose_estimation PRIVATE test)
   target_link_libraries(test_pose_estimation pose_estimation)
+
+  ament_add_gtest(test_detector_node test/test_detector_node.cpp)
+  target_include_directories(test_detector_node PRIVATE test)
+  target_link_libraries(test_detector_node aruco_detector_component)
 endif()
 
 ament_export_include_directories(include/${PROJECT_NAME})

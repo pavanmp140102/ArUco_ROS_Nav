@@ -23,19 +23,19 @@ Design is in section 6 of [../architecture.md](../architecture.md); the interfac
 
 ### Node `ArucoDetector` (`rclcpp::Node`, registered as a component)
 
-- [ ] Parameters as listed in [../interfaces.md](../interfaces.md), each with a descriptor.
-- [ ] `CameraInfo` subscription that stores intrinsics once.
-- [ ] Image subscription with sensor QoS; `cv_bridge::toCvShare` to avoid a copy.
-- [ ] TF lookup from the image's frame to `base_frame`, retried until available, then cached.
-- [ ] Publish `ArucoMarkerArray` for every image, including empty arrays.
-- [ ] Optional TF broadcast and debug image.
-- [ ] `src/aruco_detector_main.cpp` for the standalone executable; `rclcpp_components_register_node` for the component.
-- [ ] `config/detector.yaml` and `launch/detector.launch.py`.
+- [x] Parameters as listed in [../interfaces.md](../interfaces.md), each with a descriptor.
+- [x] `CameraInfo` subscription that stores intrinsics once.
+- [x] Image subscription with sensor QoS; `cv_bridge::toCvShare` to avoid a copy.
+- [x] TF lookup from the image's frame to `base_frame`, retried until available, then cached.
+- [x] Publish `ArucoMarkerArray` for every image, including empty arrays.
+- [x] Optional TF broadcast and debug image.
+- [x] `src/aruco_detector_main.cpp` for the standalone executable; `rclcpp_components_register_node` for the component.
+- [x] `config/detector.yaml` and `launch/detector.launch.py`.
 
 ### Tests (`ament_cmake_gtest`)
 
 - [x] `test_pose_estimation.cpp`: P1 to P8.
-- [ ] `test_detector_node.cpp`: PN1 to PN4, creating the node and test publishers in one process and spinning an executor.
+- [x] `test_detector_node.cpp`: PN1 to PN4, creating the node and test publishers in one process and spinning an executor.
 - [ ] E10 scenario in `dockbot_bringup` once M2 exists.
 
 ## Files created
