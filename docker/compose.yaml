@@ -1,26 +1,81 @@
-# Services for building, testing and developing the project (see docs/plan/M8_docker.md).
-# sim, sim-nvidia and test-e2e are added as M1 and M5 land.
+# Services for building, testing, running and developing the project (see docs/plan/M8_docker.md).
+# sim and test-e2e launch dockbot_bringup, which arrives with M5.
 x-common: &common
-  environment:
+  environment: &common-env
     ROS_DOMAIN_ID: "42"
     QT_X11_NO_MITSHM: "1"
   ipc: host
 
+# Host display shared with the container (run docker/run.sh to allow it with xhost).
+x-display: &display
+  <<: *common
+  environment:
+    <<: *common-env
+    DISPLAY: ${DISPLAY:-:0}
+    WORLD: ${WORLD:-docking_world}
+    MARKER_ID: ${MARKER_ID:-}
+  volumes:
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  devices:
+    - /dev/dri:/dev/dri
+
+x-runtime-build: &runtime-build
+  context: ..
+  dockerfile: docker/Dockerfile
+  target: runtime
+
 services:
   test:
     <<: *common
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: runtime
+    build: *runtime-build
     image: dockbot:runtime
     command: >
       bash -c "colcon test --packages-select dockbot_perception dockbot_docking
       dockbot_gazebo dockbot_description dockbot_interfaces
       && colcon test-result --verbose"
 
-  dev:
+  # Headless Gazebo end-to-end suite under software rendering. Set E2E_XVFB=1 to run it under
+  # a virtual X server when headless EGL is unavailable.
+  test-e2e:
     <<: *common
+    build: *runtime-build
+    image: dockbot:runtime
+    environment:
+      <<: *common-env
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      E2E_XVFB: ${E2E_XVFB:-0}
+    command: >
+      bash -c 'if [ "$$E2E_XVFB" = 1 ]; then RUN="xvfb-run -a"; fi;
+      $$RUN colcon test --packages-select dockbot_bringup --event-handlers console_direct+
+      && colcon test-result --verbose'
+
+  # Full demo with Gazebo GUI and RViz on an Intel or AMD GPU. Set MARKER_ID to dock at start-up.
+  sim:
+    <<: *display
+    build: *runtime-build
+    image: dockbot:runtime
+    command: >
+      bash -c 'ros2 launch dockbot_bringup dock.launch.py world:=$$WORLD rviz:=true
+      $${MARKER_ID:+marker_id:=$$MARKER_ID}'
+
+  # Same demo rendered on an NVIDIA GPU. Needs the NVIDIA Container Toolkit on the host.
+  sim-nvidia:
+    <<: *display
+    build: *runtime-build
+    image: dockbot:runtime
+    gpus: all
+    environment:
+      <<: *common-env
+      DISPLAY: ${DISPLAY:-:0}
+      WORLD: ${WORLD:-docking_world}
+      MARKER_ID: ${MARKER_ID:-}
+      NVIDIA_DRIVER_CAPABILITIES: all
+    command: >
+      bash -c 'ros2 launch dockbot_bringup dock.launch.py world:=$$WORLD rviz:=true gpu:=nvidia
+      $${MARKER_ID:+marker_id:=$$MARKER_ID}'
+
+  dev:
+    <<: *display
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -33,6 +88,7 @@ services:
     volumes:
       - ..:/ws
       - ccache:/home/dev/.ccache
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
     stdin_open: true
     tty: true
 
