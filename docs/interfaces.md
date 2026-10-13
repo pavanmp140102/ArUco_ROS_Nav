@@ -16,7 +16,7 @@ Planned topics, actions, messages, and parameters. Defaults here are starting va
 | `/joint_states` | `sensor_msgs/JointState` | `ros_gz_bridge` | `robot_state_publisher` | |
 | `/tf`, `/tf_static` | `tf2_msgs/TFMessage` | `robot_state_publisher`, bridge, `aruco_detector` | all | Detector adds `base_link -> aruco_<id>` |
 | `/clock` | `rosgraph_msgs/Clock` | `ros_gz_bridge` | all | Simulation time |
-| `/ground_truth/pose` | `geometry_msgs/PoseStamped` | `ros_gz_bridge` | **tests only** | True robot pose in the world frame |
+| `/ground_truth/odom` | `nav_msgs/Odometry` | `ros_gz_bridge` | **tests only** | True robot pose in the world frame (Gazebo `OdometryPublisher`, `base_footprint`) |
 
 ## Action
 
