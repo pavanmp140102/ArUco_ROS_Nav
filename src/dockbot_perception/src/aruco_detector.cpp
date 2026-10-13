@@ -171,7 +171,15 @@ void ArucoDetector::on_image(const sensor_msgs::msg::Image::ConstSharedPtr & msg
   std::vector<MarkerObservation> observations;
   std::vector<geometry_msgs::msg::TransformStamped> transforms;
 
-  for (const auto & detection : detect_markers(gray->image, dictionary_)) {
+  // A malformed frame must cost one frame, not the node, which docking cannot do without.
+  std::vector<Detection> detections;
+  try {
+    detections = detect_markers(gray->image, dictionary_);
+  } catch (const cv::Exception & e) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000, "Detection failed: %s", e.what());
+  }
+
+  for (const auto & detection : detections) {
     const auto pose = estimate_marker_pose(detection.corners, marker_size_, *K_, dist_);
     if (!pose || pose->reprojection_error > max_reprojection_error_) {
       continue;

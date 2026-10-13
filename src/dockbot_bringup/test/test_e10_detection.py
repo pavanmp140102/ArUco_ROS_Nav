@@ -50,12 +50,13 @@ def generate_test_description():
     def share(pkg):
         return get_package_share_directory(pkg)
 
+    sim_args = {'world': 'single_dock', 'headless': 'true', 'x': '0.0'}
+    if 'DOCKBOT_GPU' in os.environ:  # otherwise keep the launch file's own default
+        sim_args['gpu'] = os.environ['DOCKBOT_GPU']
     sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(share('dockbot_gazebo'), 'launch', 'sim.launch.py')),
-        launch_arguments={
-            'world': 'single_dock', 'headless': 'true',
-            'gpu': os.environ.get('DOCKBOT_GPU', 'intel'), 'x': '0.0'}.items())
+        launch_arguments=sim_args.items())
     detector = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(share('dockbot_perception'), 'launch', 'detector.launch.py')))
