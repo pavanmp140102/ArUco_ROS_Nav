@@ -23,6 +23,15 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(launch_testing_ament_cmake REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_scoring test/test_scoring.py
+    PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE}
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
+  add_launch_test(test/test_e10_detection.py
+    TARGET test_e10_detection
+    TIMEOUT 240
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
 
 ament_package()

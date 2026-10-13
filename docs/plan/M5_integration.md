@@ -15,9 +15,9 @@ Scenarios and pass criteria are the E tests in [../test_plan.md](../test_plan.md
 
 ### Ground truth for scoring
 
-- [ ] Add a pose publisher for the robot model in the world frame and bridge it to `/ground_truth/pose`.
-- [ ] `test/scoring.py`: given the robot's true pose and a marker pose from `markers.yaml`, compute front-face distance, lateral offset, and heading error. This is a Python helper for the test harness, not a node.
-- [ ] Unit test for `scoring.py` with hand-computed cases.
+- [x] Add a pose publisher for the robot model in the world frame and bridge it to `/ground_truth/odom` (`nav_msgs/Odometry`; done during M3 for E10).
+- [x] `test/scoring.py`: given the robot's true pose and a marker pose from `markers.yaml`, compute front-face distance, lateral offset, and heading error. This is a Python helper for the test harness, not a node.
+- [x] Unit test for `scoring.py` with hand-computed cases.
 - [ ] Contact check: subscribe to the robot's contact sensor, or verify from the trajectory that the front face never came closer than 0.05 m to the marker plane.
 
 ### Scenarios and tests

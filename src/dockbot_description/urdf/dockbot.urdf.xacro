@@ -201,6 +201,16 @@
             name="gz::sim::systems::JointStatePublisher">
       <topic>joint_states</topic>
     </plugin>
+    <!-- True pose of the robot in the world frame, for scoring tests only. No node under
+         test subscribes to it. -->
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>world</odom_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <odom_topic>ground_truth/odom</odom_topic>
+      <odom_publish_frequency>30</odom_publish_frequency>
+      <dimensions>3</dimensions>
+    </plugin>
   </gazebo>
 
   <gazebo reference="camera_link">
