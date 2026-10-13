@@ -29,20 +29,20 @@ Design is in section 6 of [../architecture.md](../architecture.md); the interfac
 - [x] TF lookup from the image's frame to `base_frame`, retried until available, then cached.
 - [x] Publish `ArucoMarkerArray` for every image, including empty arrays.
 - [x] Optional TF broadcast and debug image.
-- [x] `src/aruco_detector_main.cpp` for the standalone executable; `rclcpp_components_register_node` for the component.
+- [x] `src/main.cpp` for the standalone executable; `rclcpp_components_register_node` for the component.
 - [x] `config/detector.yaml` and `launch/detector.launch.py`.
 
 ### Tests (`ament_cmake_gtest`)
 
 - [x] `test_pose_estimation.cpp`: P1 to P8.
 - [x] `test_detector_node.cpp`: PN1 to PN4, creating the node and test publishers in one process and spinning an executor.
-- [ ] E10 scenario in `dockbot_bringup` once M2 exists.
+- [x] E10 in `dockbot_bringup/test/test_e10_detection.py`: a `launch_testing` test that starts headless `single_dock` and the detector, teleports the robot with `gz service set_pose`, and compares detections to ground truth. The test pins Gazebo discovery to the loopback interface so it does not depend on the host's network setup.
 
 ## Files created
 
 ```
 src/dockbot_perception/include/dockbot_perception/{pose_estimation.hpp,aruco_detector.hpp}
-src/dockbot_perception/src/{pose_estimation.cpp,aruco_detector.cpp,aruco_detector_main.cpp}
+src/dockbot_perception/src/{pose_estimation.cpp,aruco_detector.cpp,main.cpp}
 src/dockbot_perception/config/detector.yaml
 src/dockbot_perception/launch/detector.launch.py
 src/dockbot_perception/test/{synthetic_marker.hpp,test_pose_estimation.cpp,test_detector_node.cpp}
@@ -52,7 +52,7 @@ src/dockbot_perception/test/{synthetic_marker.hpp,test_pose_estimation.cpp,test_
 
 - P1 to P8 and PN1 to PN4 pass.
 - E10 passes (after M2).
-- In RViz, the `aruco_<id>` frame sits on the marker in the camera image and its z axis points out of the marker toward the robot.
+- [x] In RViz, the `aruco_<id>` frame sits on the marker in the camera image and its z axis points out of the marker toward the robot. Checked with `tf2_echo base_link aruco_0` at 1 m: translation (1.003, 0.001, 0.161), marker z axis (-1, 0, 0) in `base_link`.
 
 ## Notes
 

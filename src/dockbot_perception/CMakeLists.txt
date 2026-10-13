@@ -55,7 +55,7 @@ ament_target_dependencies(aruco_detector_component PUBLIC
   rclcpp rclcpp_components cv_bridge tf2_ros sensor_msgs geometry_msgs dockbot_interfaces)
 rclcpp_components_register_nodes(aruco_detector_component "dockbot_perception::ArucoDetector")
 
-add_executable(aruco_detector src/aruco_detector_main.cpp)
+add_executable(aruco_detector src/main.cpp)
 target_link_libraries(aruco_detector aruco_detector_component)
 
 install(TARGETS aruco_detector_component
