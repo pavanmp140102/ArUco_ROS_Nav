@@ -119,8 +119,8 @@ Both nodes declare every parameter with a `ParameterDescriptor` (description and
 | `control_rate` | `20.0` | Control loop frequency, Hz |
 | `dock_distance` | `0.10` | Target gap between front face and marker plane, metres |
 | `front_offset` | `0.15` | Distance from `base_link` to the front face, metres |
-| `final_range` | `0.70` | `d` below which the final approach may start, metres |
-| `aim_gain` | `0.5` | Fraction of `d` at which the aim point sits in front of the marker |
+| `final_range` | `0.50` | `d` below which the final approach may start, metres |
+| `aim_gain` | `0.8` | Fraction of `d` at which the aim point sits in front of the marker |
 | `max_bearing_offset` | `0.44` | Largest allowed marker bearing during approach, radians (25 degrees) |
 | `yaw_trust_range` | `2.0` | Beyond this range the marker's orientation is ignored, metres |
 | `v_max` | `0.30` | Linear speed limit, m/s |
@@ -137,9 +137,14 @@ Both nodes declare every parameter with a `ParameterDescriptor` (description and
 | `lost_timeout` | `1.0` | Return to SEARCH after this long without the target, seconds |
 | `pose_stale_time` | `0.5` | Poses older than this are ignored, seconds |
 | `pose_filter_alpha` | `0.5` | Smoothing factor for marker position, 1.0 disables it |
-| `recover_range` | `1.0` | Distance to back off to before retrying, metres |
+| `recover_range` | `2.0` | Distance to back off to before retrying, metres |
 | `max_retries` | `3` | Recovery attempts before failing |
 | `dock_timeout` | `120.0` | Overall time limit for one goal, seconds |
+| `turn_gain` | `1.5` | Turn rate per radian of desired heading during approach, 1/s |
+| `speed_gain` | `0.5` | Approach speed added per metre of range beyond `final_range`, 1/s |
+| `final_heading_gain` | `1.5` | FINAL turn rate per radian of `psi`, 1/s |
+| `final_lateral_gain` | `3.0` | FINAL turn rate per metre of `e_y`, rad/s/m |
+| `cmd_frame` | `base_link` | Frame ID stamped on `/cmd_vel` and `/docking/state` |
 | `autostart_marker_id` | `-1` | If zero or greater, start docking to this ID at launch without an action goal |
 
 ## Configuration files

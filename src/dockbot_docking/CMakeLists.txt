@@ -39,14 +39,30 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc calib3d aruco)
 
 add_library(control_law STATIC src/control_law.cpp)
+target_link_libraries(control_law PUBLIC Eigen3::Eigen)
 target_include_directories(control_law PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 
 add_library(state_machine STATIC src/state_machine.cpp)
+target_link_libraries(state_machine PUBLIC control_law)
 target_include_directories(state_machine PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+
+add_library(docking_controller_component SHARED src/docking_controller.cpp)
+target_link_libraries(docking_controller_component PUBLIC state_machine)
+ament_target_dependencies(docking_controller_component PUBLIC
+  rclcpp rclcpp_action rclcpp_components geometry_msgs dockbot_interfaces)
+set_target_properties(control_law state_machine PROPERTIES POSITION_INDEPENDENT_CODE ON)
+rclcpp_components_register_nodes(docking_controller_component "dockbot_docking::DockingController")
+
+add_executable(docking_controller src/docking_controller_main.cpp)
+target_link_libraries(docking_controller docking_controller_component)
+
+install(TARGETS docking_controller_component
+  ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS docking_controller DESTINATION lib/${PROJECT_NAME})
 
 install(TARGETS control_law state_machine EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
@@ -56,6 +72,19 @@ install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_control_law test/test_control_law.cpp)
+  target_include_directories(test_control_law PRIVATE test)
+  target_link_libraries(test_control_law control_law)
+
+  ament_add_gtest(test_state_machine test/test_state_machine.cpp)
+  target_include_directories(test_state_machine PRIVATE test)
+  target_link_libraries(test_state_machine state_machine)
+
+  ament_add_gtest(test_closed_loop test/test_closed_loop.cpp)
+  target_include_directories(test_closed_loop PRIVATE test)
+  target_link_libraries(test_closed_loop state_machine)
 endif()
 
 ament_export_include_directories(include/${PROJECT_NAME})

@@ -153,7 +153,9 @@ Cancellation and `dock_timeout` lead to `FAILED` from any active state. Every pa
 1. Place an aim point on the normal line, a fraction of the remaining distance in front of the marker: `aim = p + aim_gain * d * n`.
 2. The desired heading is the direction to that aim point.
 3. Clamp the desired heading to within `max_bearing_offset` of the marker bearing. With a 31 degree half field of view and a 25 degree clamp, the marker centre stays 6 degrees inside the frame edge. Test CL6 checks that this is enough.
-4. Turn rate is proportional to the desired heading. Forward speed scales down with remaining distance and with heading error, so the robot turns first and drives second.
+4. Turn rate is proportional to the desired heading (`turn_gain`). Forward speed is `v_final + speed_gain * (range - final_range)` capped at `v_max`, scaled by the squared cosine of the desired heading and reduced again as the marker bearing nears the edge of the view, so the robot turns first and drives second and the turn can keep up with the bearing.
+
+The clamp in step 3 is what limits how fast the robot can join the normal line: with the marker kept within 25 degrees of the heading, the angle off the normal shrinks by at most `tan(25 deg) * ln(r0 / r1)` while the range falls from `r0` to `r1`. A start 50 degrees off the normal at 2 m cannot be aligned by `final_range`, which is why RECOVER is part of normal operation and not only an error path (about half of the CL1 starts use it).
 
 As `d` shrinks, the aim point slides toward the marker, so the path bends onto the normal line and the robot arrives already aligned.
 
@@ -161,9 +163,13 @@ Beyond `yaw_trust_range` the marker's orientation estimate is unreliable, becaus
 
 **FINAL.** Entered when `d` drops below `final_range` and both `|e_y| <= gate_lateral` and `|psi| <= gate_heading`. The robot creeps forward at `v_final` with small proportional corrections on `psi` and `e_y`, and stops when `d - front_offset <= dock_distance`.
 
-**RECOVER.** Entered when the robot reaches `final_range` misaligned. It reverses to `recover_range` while keeping the marker centred, then returns to APPROACH. After `max_retries` attempts the goal fails.
+**RECOVER.** Entered when the robot reaches `final_range` misaligned, or when FINAL drifts past twice the gate limits. It reverses to `recover_range` (2 m) holding the marker off-centre, on the side of the normal line the robot is on, by up to 0.9 of `max_bearing_offset`. Backing away this way swings the line of sight toward the normal, so the next approach starts better aligned. It then returns to APPROACH. After `max_retries` attempts the goal fails.
 
 **DOCKED / FAILED.** Publish zero velocity, send the action result with the final measured errors, return to IDLE.
+
+Ten CL1 trajectories from the kinematic simulator (dots are the starts, the marker is at x = 0, normal along +x). Paths that first run out to x = 2 m are RECOVER backing away before a second approach:
+
+![CL1 trajectories](images/cl1_trajectories.png)
 
 ### 7.4 Handling imperfect input
 
