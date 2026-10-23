@@ -1,0 +1,28 @@
+docking_controller:
+  ros__parameters:
+    use_sim_time: true
+    control_rate: 20.0
+    dock_distance: 0.10
+    front_offset: 0.15
+    final_range: 0.50
+    aim_gain: 0.8
+    max_bearing_offset: 0.44
+    yaw_trust_range: 2.0
+    v_max: 0.30
+    v_final: 0.05
+    w_max: 1.0
+    a_max: 0.5
+    alpha_max: 2.0
+    search_angular_speed: 0.4
+    search_timeout: 40.0
+    acquire_frames: 3
+    gate_lateral: 0.03
+    gate_heading: 0.087
+    lost_hold_time: 0.3
+    lost_timeout: 1.0
+    pose_stale_time: 0.5
+    pose_filter_alpha: 0.5
+    recover_range: 2.0
+    max_retries: 3
+    dock_timeout: 120.0
+    autostart_marker_id: -1
