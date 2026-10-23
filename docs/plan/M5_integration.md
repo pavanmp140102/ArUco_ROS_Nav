@@ -10,8 +10,8 @@ Scenarios and pass criteria are the E tests in [../test_plan.md](../test_plan.md
 
 ### Launch
 
-- [ ] `launch/dock.launch.py` in `dockbot_bringup`: includes `sim.launch.py`, starts `aruco_detector` and `docking_controller` with their YAML files and `use_sim_time`, optional RViz. Arguments: `world`, `x`, `y`, `yaw`, `marker_id`, `headless`, `gpu`, `rviz`.
-- [ ] Extend the RViz configuration with the debug image and marker frames.
+- [x] `launch/dock.launch.py` in `dockbot_bringup`: includes `sim.launch.py`, starts `aruco_detector` and `docking_controller` with their YAML files and `use_sim_time`, optional RViz. Arguments: `world`, `x`, `y`, `yaw`, `marker_id`, `headless`, `gpu`, `rviz`.
+- [x] Extend the RViz configuration with the debug image and marker frames (marker frames come from the detector's TF, which the existing TF display already shows).
 
 ### Ground truth for scoring
 
