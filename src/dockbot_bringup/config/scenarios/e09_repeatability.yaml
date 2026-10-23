@@ -1,0 +1,20 @@
+# E9: E2 repeated ten times; all docked, and the standard deviation of the final front-face
+# distance is at most 1 cm. The robot is put back on the E2 pose between runs.
+description: E2 ten times in a row
+world: single_dock
+spawn: {x: 1.0, y: 1.0, yaw: -0.5236}
+markers:
+  0: {x: 3.0, y: 0.0, yaw: 3.14159}
+stats:
+  max_gap_std: 0.01
+trials:
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 120.0, reset_to: {x: 1.0, y: 1.0, yaw: -0.5236}}

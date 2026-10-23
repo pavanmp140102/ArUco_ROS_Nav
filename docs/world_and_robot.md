@@ -100,7 +100,7 @@ Final obstacle layout in `docking_world.sdf` (centres in metres; the room is 7 m
 
 | Name | Shape | Position (x, y) | Size |
 |---|---|---|---|
-| `box_a` | Box | (2.6, -1.2) | 0.6 x 0.6 x 0.5 |
+| `box_a` | Box | (2.6, -1.6) | 0.6 x 0.6 x 0.5 |
 | `box_b` | Box | (-2.4, 1.8) | 0.5 x 0.8 x 0.5 |
 | `box_c` | Box | (-0.5, -2.5) | 0.4 x 0.4 x 0.5 |
 | `pillar_1` | Cylinder | (0.5, 2.5) | radius 0.2, height 0.8 |
@@ -108,7 +108,9 @@ Final obstacle layout in `docking_world.sdf` (centres in metres; the room is 7 m
 
 Markers sit on 0.05 m thick plates. Walls carry markers 0 to 3 directly. Marker 4 stands on a `dock_stand` post. `single_dock.sdf` has marker 0 on a stand at (3.0, 0.0) facing -x.
 
-`pillar_occluder` lies on the line of sight from (2.0, 0.5) to marker 2. A robot placed at (2.0, 0.5) with yaw 2.44 rad does not see marker 2 (checked with plain OpenCV detection on a camera frame), while from the default spawn at the origin the marker is visible. That pose is the starting candidate for test E7; the final E7 spawn is settled in M5, once the controller's path is known.
+`pillar_occluder` lies on the line of sight from (2.0, 0.5) to marker 2. A robot placed at (2.0, 0.5) with yaw 2.44 rad does not see marker 2 (checked with plain OpenCV detection on a camera frame), while from the default spawn at the origin the marker is visible. That pose never sees marker 2, so it cannot test an interruption during approach. The E7 spawn is (2.0, 0.9) with yaw 2.51 rad: marker 2 is in view at the start, the robot approaches, the pillar then blocks the view, and the goal ends `TARGET_LOST` with the robot stopped and clear of every obstacle. A start at (2.2, 1.0) with yaw 2.45 rad showed the limit of a controller without obstacle sensing: it alternated between search and approach until the timeout and passed within about 1 cm of `pillar_1`.
+
+The obstacle `box_a` was moved from (2.6, -1.2) to (2.6, -1.6) in M5. From the dock in front of marker 4 the line of sight to marker 0 passed through its corner, which made test E12 (marker 4, then marker 0) impossible. (`images/world_layout.png` still shows the old position.)
 
 The default spawn sees every marker by turning in place, and each is detected by plain OpenCV on a camera frame. Marker plates are white, but the scene is lit with ambient light of 0.9, so they render light grey; detection is unaffected.
 

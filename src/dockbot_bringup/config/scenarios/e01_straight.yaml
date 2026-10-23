@@ -1,0 +1,10 @@
+# E1: marker straight ahead at 2 m, docked in under 60 s of simulation time.
+description: single_dock, marker 0 straight ahead at 2 m
+world: single_dock
+spawn: {x: 1.0, y: 0.0, yaw: 0.0}
+markers:
+  0: {x: 3.0, y: 0.0, yaw: 3.14159}
+trials:
+  - goal: {marker_id: 0}
+    expect: docked
+    time_limit: 60.0

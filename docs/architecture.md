@@ -188,7 +188,7 @@ Odometry, lidar, a map, or the Gazebo ground truth. Using wheel odometry to brid
 
 | Launch file | Package | Starts |
 |---|---|---|
-| `sim.launch.py` | `dockbot_gazebo` | Gazebo with a chosen world, the robot, `robot_state_publisher`, the bridges. Arguments: `world`, `x`, `y`, `yaw`, `headless`, `gpu` (`intel`, `nvidia`, or `software`) |
+| `sim.launch.py` | `dockbot_gazebo` | Gazebo with a chosen world, the robot, `robot_state_publisher`, the bridges. Arguments: `world`, `x`, `y`, `yaw`, `headless`, `gpu` (`auto`, `intel`, `nvidia`, or `software`; default `auto`) |
 | `dock.launch.py` | `dockbot_bringup` | `sim.launch.py` plus `aruco_detector`, `docking_controller`, and optionally RViz. Arguments add `marker_id` and `rviz` |
 
 All nodes run with `use_sim_time:=true`, and every timeout in the controller is measured on the node clock, so behaviour does not depend on how fast the simulator runs.
@@ -200,7 +200,7 @@ The repository carries one multi-stage `docker/Dockerfile` and a `docker/compose
 - **Stages.** `base` (the official `ros:jazzy-ros-base` image plus everything `rosdep` resolves from the manifests), `dev` (tools and a non-root user, source mounted from the host), and `runtime` (source copied in and built).
 - **Services.** `test` and `test-e2e` run the suites headless; `sim` and `sim-nvidia` run the demo with windows on the host display; `dev` gives a shell.
 - **One container runs the whole system.** The simulator, bridges, both nodes, and RViz share it, so nothing depends on ROS discovery between containers.
-- **Graphics.** The `gpu` launch argument takes `intel`, `nvidia`, or `software`. Software rendering works anywhere, including CI, at the cost of speed. Because all controller and test timing uses simulation time, a slow renderer changes how long a run takes, not whether it passes.
+- **Graphics.** The `gpu` launch argument takes `auto` (the default: NVIDIA when a working NVIDIA driver is found, otherwise `intel`), `intel`, `nvidia`, or `software`. Software rendering works anywhere, including CI, at the cost of speed. Because all controller and test timing uses simulation time, a slow renderer changes how long a run takes, not whether it passes.
 
 Nothing in the nodes or launch files may depend on the host: no absolute paths, no assumptions about a home directory, resources located through `ament_index`.
 
@@ -209,7 +209,7 @@ Nothing in the nodes or launch files may depend on the host: no absolute paths, 
 - The GUI demo in Docker is supported on Linux and on Windows through WSL 2. On macOS only the tests run, since Docker there has no GPU access.
 
 - Reliable detection range is about 6 m with the chosen camera and marker (see [world_and_robot.md](world_and_robot.md)). Every marker in the world is within 3.8 m of the default spawn point, well inside that range.
-- The robot does not avoid obstacles. A marker reachable only by driving around something is out of scope until M7.
+- The robot does not avoid obstacles. A marker reachable only by driving around something is out of scope until M7. Under a partial occlusion it can drive close to an obstacle while it searches and approaches again (see test E7 in [world_and_robot.md](world_and_robot.md)).
 - If the goal marker is not visible from where the robot stands after a full search rotation, the goal fails. The robot does not explore.
 
 ## 11. Licence

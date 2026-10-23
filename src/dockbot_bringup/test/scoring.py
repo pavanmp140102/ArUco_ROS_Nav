@@ -69,3 +69,18 @@ def dock_score(robot_xy_yaw, marker, front_offset=0.15):
     lateral = -dx * ny + dy * nx
     heading = abs(wrap(ryaw - (marker['yaw'] + math.pi)))
     return distance, abs(lateral), heading
+
+
+def yaml_markers(scenario, gazebo_share):
+    """
+    Return {id: {x, y, yaw}} for scoring: the scenario's own markers, else config/markers.yaml.
+
+    markers.yaml is the single source of truth for docking_world; scenarios that use another
+    world (single_dock) list their marker poses in the scenario file instead.
+    """
+    import os
+    import yaml
+    if 'markers' in scenario:
+        return {int(k): v for k, v in scenario['markers'].items()}
+    with open(os.path.join(gazebo_share, 'config', 'markers.yaml')) as f:
+        return {int(k): v for k, v in yaml.safe_load(f)['markers'].items()}

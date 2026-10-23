@@ -1,0 +1,8 @@
+# E6: goal ID 7 is not in the world; the result is TARGET_NOT_FOUND and the robot is stationary.
+description: docking_world, goal ID that does not exist
+world: docking_world
+spawn: {x: 0.0, y: 0.0, yaw: 0.0}
+trials:
+  - goal: {marker_id: 7}
+    expect: target_not_found
+    time_limit: 90.0

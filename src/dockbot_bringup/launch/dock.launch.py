@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""Launch the whole docking demo: Gazebo, the robot, the detector, the controller, optional RViz."""
+"""Launch the docking demo: Gazebo, the robot, the detector, the controller, optional RViz."""
 
 import os
 
@@ -40,7 +40,8 @@ def generate_launch_description():
     description_share = get_package_share_directory('dockbot_description')
 
     # Arguments that sim.launch.py already declares are passed straight through.
-    passthrough = ['world', 'x', 'y', 'yaw', 'headless', 'gpu', 'camera_rate']
+    passthrough = ['world', 'x', 'y', 'yaw', 'headless', 'gpu', 'camera_rate',
+                   'camera_noise']
 
     sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -81,10 +82,13 @@ def generate_launch_description():
         DeclareLaunchArgument('yaw', default_value='0.0', description='Spawn yaw [rad]'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='Run the Gazebo server only, without its GUI'),
-        DeclareLaunchArgument('gpu', default_value='intel',
-                              description='Renderer: intel, nvidia, or software'),
+        DeclareLaunchArgument('gpu', default_value='auto',
+                              description='Renderer: auto (NVIDIA if usable, else intel), '
+                                          'intel, nvidia, or software'),
         DeclareLaunchArgument('camera_rate', default_value='30',
                               description='Camera frame rate [Hz]'),
+        DeclareLaunchArgument('camera_noise', default_value='0.0',
+                              description='Camera Gaussian noise standard deviation; 0 is off'),
         DeclareLaunchArgument('marker_id', default_value='-1',
                               description='Dock to this marker ID at launch; -1 waits for /dock'),
         DeclareLaunchArgument('rviz', default_value='false',
