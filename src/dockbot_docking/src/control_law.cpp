@@ -41,8 +41,8 @@ constexpr double kMinEdgeScale = 0.15;
 /// Tangent of the angle off the normal at which RECOVER uses its full bearing offset.
 constexpr double kRecoverFullOffset = 0.3;
 
-/// Reverse speed in RECOVER, as a multiple of v_final.
-constexpr double kRecoverSpeedFactor = 2.0;
+/// Reverse speed, as a multiple of v_final.
+constexpr double kReverseSpeedFactor = 2.0;
 
 /// Wrap an angle to (-pi, pi]; keeps heading differences meaningful near the +-pi seam.
 double wrap(double a)
@@ -124,10 +124,15 @@ VelocityCommand recover_command(const DockErrors & errors, const ControlParams &
   const double target_bearing =
     sign * 0.9 * params.max_bearing_offset * std::min(1.0, off_normal / kRecoverFullOffset);
   VelocityCommand cmd;
-  cmd.v = -kRecoverSpeedFactor * params.v_final;
+  cmd.v = -reverse_speed(params);
   cmd.w = std::clamp(
     params.turn_gain * wrap(errors.bearing - target_bearing), -params.w_max, params.w_max);
   return cmd;
+}
+
+double reverse_speed(const ControlParams & params)
+{
+  return kReverseSpeedFactor * params.v_final;
 }
 
 VelocityCommand search_command(double last_bearing, const ControlParams & params)

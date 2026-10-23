@@ -21,9 +21,10 @@
 #include "dockbot_docking/docking_controller.hpp"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,6 +59,10 @@ DockingController::DockingController(const rclcpp::NodeOptions & options)
 : rclcpp::Node("docking_controller", options)
 {
   params_ = declare_parameters();
+  const std::string problem = validate(params_);
+  if (!problem.empty()) {
+    throw std::invalid_argument("docking_controller: " + problem);
+  }
   machine_.set_params(params_);
 
   markers_sub_ = create_subscription<dockbot_interfaces::msg::ArucoMarkerArray>(
@@ -212,13 +217,34 @@ MachineParams DockingController::declare_parameters()
   return params;
 }
 
+std::string DockingController::validate(const MachineParams & p)
+{
+  if (p.lost_hold_time > p.lost_timeout) {
+    return "lost_hold_time must not exceed lost_timeout";
+  }
+  if (p.control.recover_range <= p.control.final_range) {
+    return "recover_range must be larger than final_range";
+  }
+  return "";
+}
+
+const DockingController::DoubleSpec & DockingController::spec(const std::string & name) const
+{
+  for (const auto & s : double_specs_) {
+    if (s.name == name) {
+      return s;
+    }
+  }
+  throw std::out_of_range("unknown parameter " + name);
+}
+
 rcl_interfaces::msg::SetParametersResult DockingController::on_set_parameters(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   MachineParams updated = params_;
-  bool rate_changed = false;
+  double new_rate = control_rate_;
   for (const auto & p : parameters) {
     bool known = false;
     for (const auto & s : double_specs_) {
@@ -237,18 +263,20 @@ rcl_interfaces::msg::SetParametersResult DockingController::on_set_parameters(
       continue;
     }
     if (p.get_name() == "control_rate" && p.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
-      rate_changed = p.as_double() != control_rate_;
-      control_rate_ = p.as_double();
+      new_rate = p.as_double();
     }
   }
-  if (updated.lost_hold_time > updated.lost_timeout) {
+  // Nothing is committed until every check has passed, so a rejected batch changes nothing.
+  const std::string problem = validate(updated);
+  if (!problem.empty()) {
     result.successful = false;
-    result.reason = "lost_hold_time must not exceed lost_timeout";
+    result.reason = problem;
     return result;
   }
   params_ = updated;
   machine_.set_params(params_);
-  if (rate_changed) {
+  if (new_rate != control_rate_) {
+    control_rate_ = new_rate;
     create_timer();
   }
   return result;
@@ -256,8 +284,10 @@ rcl_interfaces::msg::SetParametersResult DockingController::on_set_parameters(
 
 void DockingController::create_timer()
 {
-  timer_ = create_wall_timer(
-    std::chrono::duration<double>(1.0 / control_rate_),
+  // A node-clock timer: with use_sim_time it ticks in simulation time, so the loop slows down
+  // or stops with the simulator and the controller's timeouts keep their meaning.
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), rclcpp::Duration::from_seconds(1.0 / control_rate_),
     std::bind(&DockingController::control_cycle, this));
 }
 
@@ -280,8 +310,20 @@ rclcpp_action::GoalResponse DockingController::on_goal(
     RCLCPP_WARN(get_logger(), "Rejecting goal: marker_id %d is not valid", goal->marker_id);
     return rclcpp_action::GoalResponse::REJECT;
   }
-  if (goal->dock_distance < 0.0f || goal->timeout < 0.0f) {
-    RCLCPP_WARN(get_logger(), "Rejecting goal: negative dock_distance or timeout");
+  // Zero means "use the parameter"; any other value must be inside the parameter's range, or a
+  // large dock_distance would report success far from the dock.
+  const auto & dd = spec("dock_distance");
+  const auto & to = spec("dock_timeout");
+  if (goal->dock_distance != 0.0f &&
+    !(goal->dock_distance >= dd.min_value && goal->dock_distance <= dd.max_value))
+  {
+    RCLCPP_WARN(get_logger(), "Rejecting goal: dock_distance %.3f outside [%.2f, %.2f]",
+      goal->dock_distance, dd.min_value, dd.max_value);
+    return rclcpp_action::GoalResponse::REJECT;
+  }
+  if (goal->timeout != 0.0f && !(goal->timeout >= to.min_value && goal->timeout <= to.max_value)) {
+    RCLCPP_WARN(get_logger(), "Rejecting goal: timeout %.2f outside [%.0f, %.0f]",
+      goal->timeout, to.min_value, to.max_value);
     return rclcpp_action::GoalResponse::REJECT;
   }
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -325,6 +367,13 @@ dockbot_interfaces::msg::DockingState DockingController::make_state_msg(
   msg.state = static_cast<uint8_t>(out.state);
   msg.target_id = out.target_id;
   msg.target_visible = out.target_visible;
+  if (!out.has_errors && out.state != State::IDLE) {
+    // No pose yet: NaN, so "unknown" cannot be mistaken for "docked" (which is exactly zero).
+    const float unknown = std::numeric_limits<float>::quiet_NaN();
+    msg.distance_to_dock = unknown;
+    msg.lateral_error = unknown;
+    msg.heading_error = unknown;
+  }
   if (out.has_errors) {
     const double gap = out.errors.d - machine_.params().control.front_offset -
       machine_.effective_dock_distance();
@@ -336,7 +385,7 @@ dockbot_interfaces::msg::DockingState DockingController::make_state_msg(
   return msg;
 }
 
-void DockingController::finish_goal(const StepOutput & out)
+void DockingController::finish_goal()
 {
   const GoalResult & r = machine_.result();
   RCLCPP_INFO(get_logger(), "Goal finished: %s", r.message.c_str());
@@ -350,7 +399,6 @@ void DockingController::finish_goal(const StepOutput & out)
   result->final_distance = static_cast<float>(r.final_distance);
   result->final_lateral_error = static_cast<float>(r.final_lateral_error);
   result->final_heading_error = static_cast<float>(r.final_heading_error);
-  (void)out;
   if (r.outcome == Outcome::DOCKED) {
     goal_handle_->succeed(result);
   } else if (r.outcome == Outcome::CANCELED) {
@@ -386,11 +434,17 @@ void DockingController::control_cycle()
     }
   }
 
-  const bool was_active = machine_.active();
   const StepOutput out = machine_.step(input, now_s);
-  if (!was_active && !out.finished && out.state == State::IDLE) {
+  if (out.state == State::IDLE) {
+    // Publish IDLE once after a goal ends so subscribers see the goal is over, then stay quiet
+    // so other velocity sources are not fought.
+    if (!idle_published_) {
+      idle_published_ = true;
+      state_pub_->publish(make_state_msg(out));
+    }
     return;
   }
+  idle_published_ = false;
 
   publish_cmd(out.cmd);
   state_pub_->publish(make_state_msg(out));
@@ -401,7 +455,7 @@ void DockingController::control_cycle()
     goal_handle_->publish_feedback(feedback);
   }
   if (out.finished) {
-    finish_goal(out);
+    finish_goal();
   }
 }
 

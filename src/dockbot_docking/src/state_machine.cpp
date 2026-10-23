@@ -38,6 +38,10 @@ constexpr double kVisibleWindow = 0.2;
 /// Largest time step the command limiter integrates over, seconds.
 constexpr double kMaxDt = 0.5;
 
+/// Straight reverse distance after losing the marker in FINAL, metres. The robot is within
+/// centimetres of the dock, so it must not spin in place there.
+constexpr double kLostBackOffDistance = 0.5;
+
 /// Gates are widened by this factor in FINAL before the robot gives up and backs off.
 constexpr double kFinalGateSlack = 2.0;
 
@@ -89,7 +93,7 @@ bool DockingStateMachine::start_goal(const GoalRequest & request, double now)
   last_cmd_ = VelocityCommand();
   filter_.reset();
   active_ = true;
-  enter_search(now);
+  enter_search(now, false);
   return true;
 }
 
@@ -139,11 +143,17 @@ void DockingStateMachine::fail(Outcome outcome, const std::string & message)
   finished_pending_ = true;
 }
 
-void DockingStateMachine::enter_search(double now)
+void DockingStateMachine::enter_search(double now, bool back_off)
 {
   state_ = State::SEARCH;
   search_start_ = now;
   consecutive_ = 0;
+  last_raw_cmd_ = VelocityCommand();
+  back_off_until_ = -1.0;
+  if (back_off) {
+    const double speed = reverse_speed(effective_);
+    back_off_until_ = now + kLostBackOffDistance / std::max(speed, 1e-3);
+  }
 }
 
 void DockingStateMachine::enter_approach()
@@ -166,12 +176,13 @@ bool DockingStateMachine::enter_recover()
   return true;
 }
 
-VelocityCommand DockingStateMachine::fresh_command(double now)
+VelocityCommand DockingStateMachine::fresh_command()
 {
-  (void)now;
   switch (state_) {
     case State::APPROACH:
-      if (errors_.d < effective_.final_range) {
+      // Range to the marker centre, not d: a robot still far off to the side has not reached the
+      // dock yet, and failing the gates there would waste a retry.
+      if (errors_.range < effective_.final_range) {
         if (gates_pass(errors_, effective_)) {
           state_ = State::FINAL;
           return final_command(errors_, effective_);
@@ -211,7 +222,11 @@ VelocityCommand DockingStateMachine::lost_command(double now)
 {
   const double lost = now - last_seen_;
   if (lost > params_.lost_timeout) {
-    enter_search(now);
+    const bool near_dock = state_ == State::FINAL;
+    enter_search(now, near_dock);
+    if (near_dock) {
+      return VelocityCommand{-reverse_speed(effective_), 0.0};
+    }
     return search_command(last_bearing_, effective_);
   }
   if (lost > params_.lost_hold_time) {
@@ -252,16 +267,19 @@ StepOutput DockingStateMachine::step(const StepInput & input, double now)
   } else if (state_ == State::SEARCH) {
     if (consecutive_ >= params_.acquire_frames) {
       enter_approach();
-      raw = fresh_command(now);
+      raw = fresh_command();
+      last_raw_cmd_ = raw;
     } else if (now - search_start_ > params_.search_timeout) {
       fail(
         ever_acquired_ ? Outcome::TARGET_LOST : Outcome::TARGET_NOT_FOUND,
         ever_acquired_ ? "target lost and not found again" : "target not found");
+    } else if (now < back_off_until_) {
+      raw = VelocityCommand{-reverse_speed(effective_), 0.0};
     } else {
       raw = search_command(last_bearing_, effective_);
     }
   } else if (now - last_seen_ <= kFreshWindow) {
-    raw = fresh_command(now);
+    raw = fresh_command();
     last_raw_cmd_ = raw;
   } else {
     raw = lost_command(now);

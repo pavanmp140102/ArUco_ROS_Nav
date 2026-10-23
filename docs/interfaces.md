@@ -22,7 +22,7 @@ Planned topics, actions, messages, and parameters. Defaults here are starting va
 
 ### `/dock` (`dockbot_interfaces/action/Dock`)
 
-Server: `docking_controller`. One goal at a time; a new goal while one is active is rejected.
+Server: `docking_controller`. One goal at a time; a new goal while one is active is rejected. A goal is also rejected when `marker_id` is negative, or when a non-zero `dock_distance` or `timeout` lies outside the range of the matching parameter (`dock_distance` 0.01 to 1.0 m, `dock_timeout` 1 to 3600 s).
 
 ```
 # Goal
@@ -88,13 +88,15 @@ std_msgs/Header header
 uint8 state
 int32 target_id                # -1 when idle
 bool target_visible
-float32 distance_to_dock       # d - front_offset - dock_distance; zero when docked
+float32 distance_to_dock       # d - front_offset - dock_distance; zero when docked; NaN until the first pose of the goal
 float32 lateral_error          # e_y, metres
 float32 heading_error          # psi, radians
 uint8 retries
 ```
 
 ## Parameters
+
+`docking_controller` also checks that the values are consistent, at startup (the node refuses to start) and on every change (the whole change is rejected): `lost_hold_time` must not exceed `lost_timeout`, and `recover_range` must exceed `final_range`. Its control loop runs on a node-clock timer, so with `use_sim_time` it follows simulation time. `/docking/state` publishes IDLE once after a goal ends, then nothing, and `/cmd_vel` is only published while a goal is active.
 
 Both nodes declare every parameter with a `ParameterDescriptor` (description and, where it applies, a range), so `ros2 param describe` documents them and out-of-range values are rejected.
 

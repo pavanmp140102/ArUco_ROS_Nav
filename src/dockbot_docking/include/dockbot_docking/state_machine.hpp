@@ -165,12 +165,25 @@ public:
   StepOutput step(const StepInput & input, double now);
 
 private:
+  /// Take the goal marker out of the new detections, filter its pose and update the error terms.
   void ingest(const StepInput & input, double now);
+
+  /// End the goal: record the outcome and the last measured errors so the node can report them.
   void fail(Outcome outcome, const std::string & message);
-  void enter_search(double now);
+
+  /// Enter SEARCH (optionally backing off first) so a lost marker can be found again.
+  void enter_search(double now, bool back_off);
+
+  /// Enter APPROACH with a pose filter restarted from the newest raw pose.
   void enter_approach();
+
+  /// Enter RECOVER, or fail the goal when the retries are used up; returns false on failure.
   bool enter_recover();
-  VelocityCommand fresh_command(double now);
+
+  /// Command for the current state from the latest filtered pose, applying state transitions.
+  VelocityCommand fresh_command();
+
+  /// Command while the target is missing: decay the last command, stop, then search again.
   VelocityCommand lost_command(double now);
 
   MachineParams params_;
@@ -184,6 +197,7 @@ private:
   double goal_start_ = 0.0;
   double goal_timeout_ = 0.0;
   double search_start_ = 0.0;
+  double back_off_until_ = -1.0;
   double last_step_ = 0.0;
   double last_seen_ = -1e9;
   double last_bearing_ = 0.0;

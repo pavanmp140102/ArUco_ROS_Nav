@@ -118,6 +118,14 @@ VelocityCommand final_command(const DockErrors & errors, const ControlParams & p
 VelocityCommand recover_command(const DockErrors & errors, const ControlParams & params);
 
 /**
+ * Speed used whenever the robot reverses (RECOVER and the back-off after losing the marker
+ * close to the dock), metres per second, positive.
+ *
+ * Kept slow so that backing away from the dock stays gentle and the marker stays trackable.
+ */
+double reverse_speed(const ControlParams & params);
+
+/**
  * Search command: rotate in place toward the side the marker was last seen on.
  *
  * Sweeps the camera round until the goal marker enters the view.

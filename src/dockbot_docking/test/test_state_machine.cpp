@@ -418,3 +418,52 @@ TEST(StateMachine, NewGoalRightAfterResult)
   EXPECT_TRUE(h.machine.start_goal(goal(), h.now));
   EXPECT_EQ(h.blank().state, State::SEARCH);
 }
+
+// After a re-acquire, a dropout holds the command just issued, not one from before the loss.
+// The next step comes 0.2 s later (a slow cycle), so no fresh-pose step refreshes it first.
+TEST(StateMachine, HoldAfterReacquireUsesNewCommand)
+{
+  Harness h;
+  h.machine.start_goal(goal(), h.now);
+  ASSERT_EQ(h.see_n(40, 2.5, 0.0).state, State::APPROACH);  // issued 0.3 m/s before the loss
+  while (h.blank().state != State::SEARCH) {
+  }
+  ASSERT_EQ(h.see_n(3, 0.6, 0.0).state, State::APPROACH);  // new command: about 0.1 m/s
+  h.now += 0.2 - kDt;
+  const StepOutput o = h.blank();
+  EXPECT_EQ(o.state, State::APPROACH);
+  EXPECT_LT(o.cmd.v, 0.09);  // holding the old 0.3 m/s would give about 0.125
+}
+
+// The final-approach decision uses range to the marker, so a robot still far off to the side keeps
+// approaching and does not waste a retry.
+TEST(StateMachine, FarOffToTheSideKeepsApproaching)
+{
+  Harness h;
+  h.machine.start_goal(goal(), h.now);
+  const StepOutput o = h.see_n(10, 0.45, 1.0);
+  EXPECT_EQ(o.state, State::APPROACH);
+  EXPECT_EQ(o.retries, 0);
+}
+
+// Losing the marker in FINAL backs straight off first and only then turns in place.
+TEST(StateMachine, LostInFinalBacksOffBeforeSearching)
+{
+  Harness h;
+  h.machine.start_goal(goal(), h.now);
+  ASSERT_EQ(h.see_n(3, 0.45, 0.0).state, State::FINAL);
+  StepOutput o;
+  double t_lost = h.now;
+  while (h.now - t_lost < 1.3) {
+    o = h.blank();
+  }
+  ASSERT_EQ(o.state, State::SEARCH);
+  EXPECT_LT(o.cmd.v, 0.0);
+  EXPECT_NEAR(o.cmd.w, 0.0, 1e-9);
+  while (h.now - t_lost < 8.0) {
+    o = h.blank();
+  }
+  EXPECT_EQ(o.state, State::SEARCH);
+  EXPECT_DOUBLE_EQ(o.cmd.v, 0.0);
+  EXPECT_NEAR(o.cmd.w, h.machine.params().control.search_angular_speed, 1e-9);
+}

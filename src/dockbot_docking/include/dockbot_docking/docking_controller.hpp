@@ -83,6 +83,12 @@ private:
   /// Declare every parameter with its description and range and return the initial settings.
   MachineParams declare_parameters();
 
+  /// Return why the settings are inconsistent, or an empty string when they are usable.
+  static std::string validate(const MachineParams & params);
+
+  /// Value range of a declared floating-point parameter, used to check goal fields too.
+  const DoubleSpec & spec(const std::string & name) const;
+
   /// Check and apply live parameter changes so gains can be tuned while the robot runs.
   rcl_interfaces::msg::SetParametersResult on_set_parameters(
     const std::vector<rclcpp::Parameter> & parameters);
@@ -110,7 +116,7 @@ private:
   dockbot_interfaces::msg::DockingState make_state_msg(const StepOutput & out) const;
 
   /// Send the action result for a finished goal and release it.
-  void finish_goal(const StepOutput & out);
+  void finish_goal();
 
   /// Publish a velocity command with the current stamp.
   void publish_cmd(const VelocityCommand & cmd);
@@ -121,6 +127,7 @@ private:
   double control_rate_ = 20.0;
   int autostart_marker_id_ = -1;
   bool autostarted_ = false;
+  bool idle_published_ = true;
   std::string cmd_frame_;
 
   DockingStateMachine machine_;
@@ -132,7 +139,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_pub_;
   rclcpp::Publisher<dockbot_interfaces::msg::DockingState>::SharedPtr state_pub_;
   rclcpp_action::Server<Dock>::SharedPtr action_server_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_;  // node-clock timer, so it follows simulation time
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_;
 };
 
