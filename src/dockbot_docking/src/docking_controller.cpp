@@ -166,6 +166,9 @@ MachineParams DockingController::declare_parameters()
     {"final_lateral_gain", d.control.final_lateral_gain, 0.0, 10.0,
       "Final approach turn rate per metre of lateral error, rad/s/m",
       [](MachineParams & p) -> double & {return p.control.final_lateral_gain;}},
+    {"final_slow_gain", d.control.final_slow_gain, 0.1, 10.0,
+      "Final approach speed per metre left to the stop point, 1/s",
+      [](MachineParams & p) -> double & {return p.control.final_slow_gain;}},
   };
   int_specs_ = {
     {"acquire_frames", d.acquire_frames, 1, 30,

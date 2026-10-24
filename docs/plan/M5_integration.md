@@ -49,6 +49,8 @@ src/dockbot_bringup/test/{scoring.py,test_scoring.py,test_e2e.py}
 
 ## Notes
 
+- In the first three-run attempt, run 2 had one E9 trial stop at a gap of 0.0794 m (tolerance 0.08 to 0.12): about 2 cm past the stop point, where the other 35 trials stopped 0.087 to 0.094 m away. The likely cause is a short detection dropout at the dock, during which the controller holds its last command for up to `lost_hold_time`. The fix is a slower creep near the stop point (`final_slow_gain`), so a dropout costs millimetres. The gate was then run again from the start.
+
 - The e2e tests carry the CTest label `e2e`: `ctest -L e2e` runs only them, `ctest -LE e2e` skips them. Each scenario is its own launch test with its own simulator; the scenario name comes from the `SCENARIO` environment variable that `CMakeLists.txt` sets.
 - E4, E9 and E12 run several goals in one simulator and put the robot back with `set_pose` between runs where the scenario says so. This deviates from "separate runs" in E4 and "repeated ten times" in E9 only in that the simulator is not restarted.
 

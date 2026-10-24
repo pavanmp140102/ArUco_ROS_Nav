@@ -161,7 +161,7 @@ As `d` shrinks, the aim point slides toward the marker, so the path bends onto t
 
 Beyond `yaw_trust_range` the marker's orientation estimate is unreliable, because a small square seen from far away gives a noisy, sometimes flipped, tilt. There the controller ignores `n` and simply drives toward the marker by bearing. The alignment behaviour takes over once inside that range.
 
-**FINAL.** Entered when the range to the marker centre drops below `final_range` (not `d`, so a robot still far to the side keeps approaching and wastes no retry) and both `|e_y| <= gate_lateral` and `|psi| <= gate_heading`. The robot creeps forward at `v_final` with small proportional corrections on `psi` and `e_y`, and stops when `d - front_offset <= dock_distance`.
+**FINAL.** Entered when the range to the marker centre drops below `final_range` (not `d`, so a robot still far to the side keeps approaching and wastes no retry) and both `|e_y| <= gate_lateral` and `|psi| <= gate_heading`. The robot creeps forward at `v_final` with small proportional corrections on `psi` and `e_y`, slowing to 40% of `v_final` over the last `v_final / final_slow_gain` metres so that detection lag or a short dropout cannot carry it far past the stop point, and stops when `d - front_offset <= dock_distance`.
 
 **RECOVER.** Entered when the robot reaches `final_range` misaligned, or when FINAL drifts past twice the gate limits. It reverses to `recover_range` (2 m) holding the marker off-centre, on the side of the normal line the robot is on, by up to 0.9 of `max_bearing_offset`. Backing away this way swings the line of sight toward the normal, so the next approach starts better aligned. It then returns to APPROACH. After `max_retries` attempts the goal fails.
 

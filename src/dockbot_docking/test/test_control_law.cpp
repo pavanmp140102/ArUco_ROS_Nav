@@ -211,3 +211,18 @@ TEST(ControlLaw, PoseFilterSmoothsAndResets)
   EXPECT_FALSE(f.initialized());
   EXPECT_NEAR(f.update(b).translation().x(), 2.0, 1e-12);
 }
+
+// The final creep slows near the stop point, and never below 40% of v_final or above v_final.
+TEST(ControlLaw, FinalCreepSlowsNearStopPoint)
+{
+  const ControlParams p;
+  DockErrors e;
+  e.d = p.front_offset + p.dock_distance + 0.30;  // far from the stop point: full creep speed
+  EXPECT_DOUBLE_EQ(dockbot_docking::final_command(e, p).v, p.v_final);
+  e.d = p.front_offset + p.dock_distance + 0.03;  // 3 cm to go: slower
+  const double near = dockbot_docking::final_command(e, p).v;
+  EXPECT_LT(near, p.v_final);
+  EXPECT_GT(near, 0.4 * p.v_final);
+  e.d = p.front_offset + p.dock_distance - 0.01;  // past the stop point: the minimum speed
+  EXPECT_DOUBLE_EQ(dockbot_docking::final_command(e, p).v, 0.4 * p.v_final);
+}

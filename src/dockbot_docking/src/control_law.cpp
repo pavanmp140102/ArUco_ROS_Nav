@@ -41,6 +41,9 @@ constexpr double kMinEdgeScale = 0.15;
 /// Tangent of the angle off the normal at which RECOVER uses its full bearing offset.
 constexpr double kRecoverFullOffset = 0.3;
 
+/// Lowest creep speed near the stop point, as a multiple of v_final.
+constexpr double kMinFinalSpeedFactor = 0.4;
+
 /// Reverse speed, as a multiple of v_final.
 constexpr double kReverseSpeedFactor = 2.0;
 
@@ -107,7 +110,9 @@ VelocityCommand approach_command(const DockErrors & errors, const ControlParams 
 VelocityCommand final_command(const DockErrors & errors, const ControlParams & params)
 {
   VelocityCommand cmd;
-  cmd.v = params.v_final;
+  const double to_go = errors.d - params.front_offset - params.dock_distance;
+  cmd.v = std::clamp(
+    params.final_slow_gain * to_go, kMinFinalSpeedFactor * params.v_final, params.v_final);
   cmd.w = std::clamp(
     params.final_heading_gain * errors.psi + params.final_lateral_gain * errors.e_y,
     -params.w_max, params.w_max);

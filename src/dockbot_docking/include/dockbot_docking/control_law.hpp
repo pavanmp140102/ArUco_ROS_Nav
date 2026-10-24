@@ -52,6 +52,9 @@ struct ControlParams
   double final_heading_gain = 1.5;
   /// Final-approach turn-rate gain on lateral error e_y, rad/s per metre.
   double final_lateral_gain = 3.0;
+  /// Final-approach speed per metre still to go to the stop point, 1/s. The creep slows below
+  /// v_final once the remaining gap is under v_final / final_slow_gain, down to 40% of v_final.
+  double final_slow_gain = 1.0;
 };
 
 /// Marker pose reduced to the four numbers the controller works with.
@@ -105,7 +108,9 @@ VelocityCommand approach_command(const DockErrors & errors, const ControlParams 
 /**
  * Final command: slow forward creep with small corrections on psi and e_y.
  *
- * Closes the last stretch to the dock at v_final while removing residual misalignment.
+ * Closes the last stretch to the dock at v_final while removing residual misalignment, and
+ * slows down near the stop point so that detection lag or a short dropout cannot carry the
+ * robot far past it.
  */
 VelocityCommand final_command(const DockErrors & errors, const ControlParams & params);
 

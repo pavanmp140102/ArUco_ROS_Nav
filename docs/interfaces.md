@@ -146,6 +146,7 @@ Both nodes declare every parameter with a `ParameterDescriptor` (description and
 | `speed_gain` | `0.5` | Approach speed added per metre of range beyond `final_range`, 1/s |
 | `final_heading_gain` | `1.5` | FINAL turn rate per radian of `psi`, 1/s |
 | `final_lateral_gain` | `3.0` | FINAL turn rate per metre of `e_y`, rad/s/m |
+| `final_slow_gain` | `1.0` | FINAL speed per metre left to the stop point, 1/s: the creep slows below `v_final` in the last `v_final / final_slow_gain` metres, to 40% of `v_final` |
 | `cmd_frame` | `base_link` | Frame ID stamped on `/cmd_vel` and `/docking/state` |
 | `autostart_marker_id` | `-1` | If zero or greater, start docking to this ID at launch without an action goal |
 
