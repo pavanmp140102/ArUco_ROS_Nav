@@ -30,9 +30,9 @@ Scenarios and pass criteria are the E tests in [../test_plan.md](../test_plan.md
 
 ### Tuning
 
-- [ ] Run E1 to E5 and adjust `controller.yaml` until all pass. Re-run the CL tests after every change.
-- [ ] Run the full suite three times in a row.
-- [ ] Record final parameter values in [../interfaces.md](../interfaces.md) and results in a short table at the end of [../test_plan.md](../test_plan.md).
+- [x] Run E1 to E5 and adjust `controller.yaml` until all pass. Re-run the CL tests after every change.
+- [x] Run the full suite three times in a row.
+- [x] Record final parameter values in [../interfaces.md](../interfaces.md) and results in a short table at the end of [../test_plan.md](../test_plan.md).
 
 ## Files created
 
@@ -44,8 +44,8 @@ src/dockbot_bringup/test/{scoring.py,test_scoring.py,test_e2e.py}
 
 ## Gate
 
-- E1 to E12 pass in three consecutive full runs.
-- All earlier gates still pass.
+- [x] E1 to E12 pass in three consecutive full runs (results table in `test_plan.md`).
+- [ ] All earlier gates still pass (re-run after the review fixes).
 
 ## Notes
 

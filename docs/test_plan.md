@@ -111,6 +111,32 @@ Run headless through `launch_testing`. Each scenario is a YAML file in `dockbot_
 | E11 | E2 with camera noise enabled | Docked within tolerance |
 | E12 | Two goals in a row in `docking_world`: ID 4, then ID 0 | Both docked. The second goal starts from the first dock |
 
+## Results (M5)
+
+Three consecutive full runs of E1 to E12, each scenario from a fresh simulator (headless, `gpu:=auto`). All 36 scenario runs passed. Final-pose figures are from Gazebo ground truth, after the robot had been stationary for one second; the tolerances are in the table at the top of this file.
+
+| Scenario | Runs | Result | Front-face gap [m] | Lateral [m] | Heading [deg] | Sim time per goal [s] |
+|---|---|---|---|---|---|---|
+| E1 | 3 | docked | 0.097 - 0.098 | <= 0.0013 | <= 0.14 | 13 |
+| E2 | 3 | docked | 0.096 - 0.098 | <= 0.0014 | <= 0.14 | 27 |
+| E3 | 3 | docked | 0.095 - 0.098 | <= 0.0017 | <= 0.18 | 19 |
+| E4 (5 goals) | 15 | docked | 0.095 - 0.098 | <= 0.0021 | <= 0.21 | 24 - 67 |
+| E5 | 3 | docked at 1 | 0.097 - 0.098 | <= 0.0022 | <= 0.16 | 25 |
+| E6 | 3 | `TARGET_NOT_FOUND`, stationary | | | | 40 |
+| E7 | 3 | `TARGET_LOST`, stationary, no contact | | | | 42 |
+| E8 | 3 | `CANCELED`, stopped within 0.5 s | | | | 2 (to cancel) |
+| E9 (10 goals) | 30 | docked; gap standard deviation 1 mm | 0.096 - 0.098 | <= 0.0018 | <= 0.26 | 27 - 49 |
+| E10 | 3 | within the P1 bounds | | | | |
+| E11 | 3 | docked | 0.094 - 0.097 | <= 0.0008 | <= 0.05 | 27 |
+| E12 (2 goals) | 6 | both docked | 0.096 - 0.098 | <= 0.0010 | <= 0.16 | 67 - 80 |
+
+Notes:
+
+- The gap lands 2 to 5 mm short of the 0.10 m target, well inside the 0.02 m tolerance. Before the final creep slowed near the stop point (`final_slow_gain`) the spread was 0.087 to 0.094 m, and one run stopped at 0.079 m, outside the tolerance.
+- E4, E9 and E12 run several goals in one simulator. The robot is put back on its start pose with the Gazebo `set_pose` service between goals where the scenario file says so.
+- RECOVER was used in 4 of the 15 E4 goals, 6 of the 6 E12 goals and 1 of the 30 E9 goals; every one of them docked within tolerance.
+- Before these three runs, an earlier set of three runs had one E9 goal that never returned an action result (sim time was 150 s past the goal). It did not repeat in 30 more E9 goals nor in the three runs above, and its cause was not found. The harness now prints the simulation time, the controller state and the state history with any timeout, and keeps the full output of each scenario, so a repeat can be diagnosed.
+
 ## Docker (DK)
 
 These prove the project runs on a machine that has only Docker. Details of the image and services are in [plan/M8_docker.md](plan/M8_docker.md).

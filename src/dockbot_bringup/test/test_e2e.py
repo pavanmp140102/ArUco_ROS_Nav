@@ -154,7 +154,14 @@ class TestScenario(unittest.TestCase):
             if self.sim_now() - t0 > sim_seconds:
                 break
             time.sleep(0.05)
-        self.fail('timed out waiting for ' + what)
+        self.fail('timed out waiting for %s (%s)' % (what, self.diagnostics()))
+
+    def diagnostics(self):
+        """Return a one-line summary of the simulation and controller, for failure messages."""
+        state = STATE_NAMES.get(self.state.state) if self.state is not None else None
+        pose = tuple(round(v, 2) for v in self.truth[1:]) if self.truth else None
+        return 'sim time %.1f, controller %s, states %s, pose %s' % (
+            self.sim_now(), state, '>'.join(STATE_NAMES[x][:3] for x in self.state_log), pose)
 
     def pose(self):
         """Latest true pose as (x, y, yaw)."""
