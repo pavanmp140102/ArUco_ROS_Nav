@@ -1,0 +1,12 @@
+# E8: cancel the action two seconds into APPROACH; the robot is stationary within 0.5 s and the
+# result is CANCELED.
+description: single_dock, cancel two seconds into APPROACH
+world: single_dock
+spawn: {x: 1.0, y: 0.0, yaw: 0.0}
+markers:
+  0: {x: 3.0, y: 0.0, yaw: 3.14159}
+trials:
+  - goal: {marker_id: 0}
+    expect: canceled
+    time_limit: 60.0
+    cancel: {in_state: APPROACH, after: 2.0}

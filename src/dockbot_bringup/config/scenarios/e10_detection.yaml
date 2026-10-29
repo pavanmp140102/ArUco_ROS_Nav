@@ -1,0 +1,7 @@
+# E10: stationary detection check, run by test_e10_detection.py (not by test_e2e.py). The
+# robot is placed at each distance and the detector's pose is compared with ground truth.
+description: single_dock, detector against ground truth at four distances
+world: single_dock
+markers:
+  0: {x: 3.0, y: 0.0, yaw: 3.14159}
+distances: [0.3, 1.0, 2.0, 3.8]

@@ -1,0 +1,10 @@
+# E3: robot facing away from the marker; SEARCH finds it, then the robot docks.
+description: single_dock, robot facing away from the marker
+world: single_dock
+spawn: {x: 1.0, y: 0.0, yaw: 3.14159}
+markers:
+  0: {x: 3.0, y: 0.0, yaw: 3.14159}
+trials:
+  - goal: {marker_id: 0}
+    expect: docked
+    time_limit: 120.0

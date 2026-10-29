@@ -1,0 +1,12 @@
+# E4: docking_world from the default spawn, goal set to each of IDs 0 to 4 in turn. The robot is
+# put back on the default spawn between goals. Docked at the requested marker every time, and
+# never in front of a different one.
+description: docking_world, each marker ID as the goal from the default spawn
+world: docking_world
+spawn: {x: 0.0, y: 0.0, yaw: 0.0}
+trials:
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 150.0, reset_to: {x: 0.0, y: 0.0, yaw: 0.0}}
+  - {goal: {marker_id: 1}, expect: docked, time_limit: 150.0, reset_to: {x: 0.0, y: 0.0, yaw: 0.0}}
+  - {goal: {marker_id: 2}, expect: docked, time_limit: 150.0, reset_to: {x: 0.0, y: 0.0, yaw: 0.0}}
+  - {goal: {marker_id: 3}, expect: docked, time_limit: 150.0, reset_to: {x: 0.0, y: 0.0, yaw: 0.0}}
+  - {goal: {marker_id: 4}, expect: docked, time_limit: 150.0, reset_to: {x: 0.0, y: 0.0, yaw: 0.0}}

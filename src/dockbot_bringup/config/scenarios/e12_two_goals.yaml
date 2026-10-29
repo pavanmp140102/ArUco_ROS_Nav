@@ -1,0 +1,8 @@
+# E12: two goals in a row in docking_world, ID 4 then ID 0. The second goal starts from the first
+# dock (no reset in between). Both dock within tolerance.
+description: docking_world, goal 4 then goal 0
+world: docking_world
+spawn: {x: 0.0, y: 0.0, yaw: 0.0}
+trials:
+  - {goal: {marker_id: 4}, expect: docked, time_limit: 150.0}
+  - {goal: {marker_id: 0}, expect: docked, time_limit: 200.0}

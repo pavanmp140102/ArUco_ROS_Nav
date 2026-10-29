@@ -15,6 +15,7 @@
 """Launch Gazebo, spawn dockbot, and bridge its topics to ROS: the simulated half of docking."""
 
 import os
+import subprocess
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -35,6 +36,24 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
 
+def _nvidia_usable():
+    """
+    Return True when this host has an NVIDIA GPU with a loaded driver and is not a container.
+
+    Lets the default choose the NVIDIA GPU on a workstation and fall back to the portable
+    setting everywhere else. Inside a container nvidia-smi can succeed without a usable
+    OpenGL stack, so containers keep the portable setting; the NVIDIA service of the Docker
+    setup passes gpu:=nvidia explicitly.
+    """
+    if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
+        return False
+    try:
+        return subprocess.run(
+            ['nvidia-smi', '-L'], capture_output=True, timeout=3).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def _gz_args(context):
     """
     Build the Gazebo command line and GPU environment from the launch arguments.
@@ -45,6 +64,8 @@ def _gz_args(context):
     world = LaunchConfiguration('world').perform(context)
     headless = LaunchConfiguration('headless').perform(context) == 'true'
     gpu = LaunchConfiguration('gpu').perform(context)
+    if gpu == 'auto':
+        gpu = 'nvidia' if _nvidia_usable() else 'intel'
 
     world_file = os.path.join(
         get_package_share_directory('dockbot_gazebo'), 'worlds', world + '.sdf')
@@ -79,6 +100,7 @@ def generate_launch_description():
         Command([
             FindExecutable(name='xacro'), ' ', xacro_file,
             ' camera_rate:=', LaunchConfiguration('camera_rate'),
+            ' camera_noise:=', LaunchConfiguration('camera_noise'),
         ]),
         value_type=str)
 
@@ -119,10 +141,13 @@ def generate_launch_description():
         DeclareLaunchArgument('yaw', default_value='0.0', description='Spawn yaw [rad]'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='Run the server only, without the Gazebo GUI'),
-        DeclareLaunchArgument('gpu', default_value='intel',
-                              description='Renderer: intel, nvidia, or software'),
+        DeclareLaunchArgument('gpu', default_value='auto',
+                              description='Renderer: auto (NVIDIA if usable, else intel), '
+                                          'intel, nvidia, or software'),
         DeclareLaunchArgument('camera_rate', default_value='30',
                               description='Camera frame rate [Hz]'),
+        DeclareLaunchArgument('camera_noise', default_value='0.0',
+                              description='Camera Gaussian noise standard deviation; 0 is off'),
         AppendEnvironmentVariable(
             'GZ_SIM_RESOURCE_PATH', os.path.join(gazebo_share, 'models')),
         OpaqueFunction(function=_gz_args),
