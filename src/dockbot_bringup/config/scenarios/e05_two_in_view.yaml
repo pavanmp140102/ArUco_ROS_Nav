@@ -1,0 +1,8 @@
+# E5: spawn facing markers 0 and 1 with both in view; the goal is 1, so the robot must dock at 1.
+description: docking_world, markers 0 and 1 both in view, goal 1
+world: docking_world
+spawn: {x: 1.0, y: 0.6, yaw: 0.278}
+trials:
+  - goal: {marker_id: 1}
+    expect: docked
+    time_limit: 150.0

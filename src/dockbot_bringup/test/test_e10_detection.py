@@ -31,8 +31,9 @@ from nav_msgs.msg import Odometry
 import pytest
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
-
 from scoring import marker_in_base, wrap, yaw_of
+from sim_cleanup import isolate_gazebo
+import yaml
 
 
 def stamp(header):
@@ -40,8 +41,18 @@ def stamp(header):
     return header.stamp.sec + header.stamp.nanosec * 1e-9
 
 
-MARKER = {'x': 3.0, 'y': 0.0, 'yaw': math.pi}  # marker_0 in single_dock.sdf
-DISTANCES = [0.3, 1.0, 2.0, 3.8]  # base_link to marker plane [m]
+def _load_scenario():
+    """Read config/scenarios/e10_detection.yaml: the marker pose and the distances to test."""
+    path = os.path.join(
+        get_package_share_directory('dockbot_bringup'), 'config', 'scenarios',
+        'e10_detection.yaml')
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+_SCENARIO = _load_scenario()
+MARKER = _SCENARIO['markers'][0]  # marker_0 in single_dock.sdf
+DISTANCES = _SCENARIO['distances']  # base_link to marker plane [m]
 
 
 @pytest.mark.launch_test
@@ -60,6 +71,7 @@ def generate_test_description():
     detector = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(share('dockbot_perception'), 'launch', 'detector.launch.py')))
+    isolate_gazebo()
     return LaunchDescription([
         # Discovery over the loopback interface keeps Gazebo reachable on machines whose
         # network interfaces do not carry multicast.

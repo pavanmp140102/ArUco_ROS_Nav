@@ -14,6 +14,9 @@
   <xacro:arg name="camera_height" default="720"/>
   <xacro:arg name="camera_fov" default="1.0856"/>
   <xacro:arg name="camera_rate" default="30"/>
+  <!-- Standard deviation of Gaussian pixel noise (0 to 1 of full scale); 0 turns the noise off. -->
+  <xacro:arg name="camera_noise" default="0.0"/>
+  <xacro:property name="camera_noise" value="$(arg camera_noise)"/>
 
   <xacro:property name="chassis_l" value="0.30"/>
   <xacro:property name="chassis_w" value="0.24"/>
@@ -228,6 +231,13 @@
           <format>R8G8B8</format>
         </image>
         <clip><near>0.05</near><far>20.0</far></clip>
+        <xacro:if value="${camera_noise &gt; 0.0}">
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>${camera_noise}</stddev>
+          </noise>
+        </xacro:if>
       </camera>
     </sensor>
   </gazebo>

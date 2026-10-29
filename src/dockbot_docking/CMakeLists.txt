@@ -77,6 +77,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_state_machine state_machine)
 
   ament_add_gtest(test_controller_node test/test_controller_node.cpp)
+  target_include_directories(test_controller_node PRIVATE test)
   target_link_libraries(test_controller_node docking_controller_component)
   ament_target_dependencies(test_controller_node rclcpp rclcpp_action dockbot_interfaces
     rosgraph_msgs)

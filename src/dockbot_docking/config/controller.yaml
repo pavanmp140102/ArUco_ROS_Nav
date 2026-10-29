@@ -23,6 +23,7 @@ docking_controller:
     pose_stale_time: 0.5
     pose_filter_alpha: 0.5
     recover_range: 2.0
+    final_slow_gain: 1.0
     max_retries: 3
     dock_timeout: 120.0
     autostart_marker_id: -1

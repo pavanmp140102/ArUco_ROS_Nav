@@ -119,7 +119,7 @@
     </include>
     <model name="box_a">
       <static>true</static>
-      <pose>2.6 -1.2 0.25 0 0 0</pose>
+      <pose>2.6 -1.6 0.25 0 0 0</pose>
       <link name="link">
         <collision name="c"><geometry><box><size>0.6 0.6 0.5</size></box></geometry></collision>
         <visual name="v">
