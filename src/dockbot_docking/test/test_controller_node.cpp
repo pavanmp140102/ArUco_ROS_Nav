@@ -179,8 +179,14 @@ TEST_F(ControllerNode, ControlLoopFollowsSimulationTime)
   f.spin_until([] {return false;});  // two wall seconds with a frozen clock
   EXPECT_LE(f.states.size(), 1u);
   for (int i = 1; i <= 10; ++i) {
+    // Give each clock step up to 200 ms of wall time to produce a state, so a loaded machine
+    // that delivers /clock late does not look like a loop that ignores simulation time.
+    const auto before = f.states.size();
     publish_clock(1.0 + 0.05 * i);
-    f.executor.spin_some(milliseconds(20));
+    const auto end = std::chrono::steady_clock::now() + milliseconds(200);
+    while (f.states.size() == before && std::chrono::steady_clock::now() < end) {
+      f.executor.spin_some(milliseconds(10));
+    }
   }
   EXPECT_GE(f.states.size(), 5u);
   f.client->async_cancel_goal(handle);

@@ -1,5 +1,5 @@
 # Services for building, testing, running and developing the project (see docs/plan/M8_docker.md).
-# sim and test-e2e launch dockbot_bringup, which arrives with M5.
+# sim and test-e2e launch dockbot_bringup.
 x-common: &common
   environment: &common-env
     ROS_DOMAIN_ID: "42"
@@ -25,13 +25,15 @@ x-runtime-build: &runtime-build
   target: runtime
 
 services:
+  # Packages run one at a time: their node tests share one ROS domain and disturb each other
+  # when they run in parallel.
   test:
     <<: *common
     build: *runtime-build
     image: dockbot:runtime
     command: >
-      bash -c "colcon test --packages-select dockbot_perception dockbot_docking
-      dockbot_gazebo dockbot_description dockbot_interfaces
+      bash -c "colcon test --executor sequential --packages-select dockbot_perception
+      dockbot_docking dockbot_gazebo dockbot_description dockbot_interfaces
       && colcon test-result --verbose"
 
   # Headless Gazebo end-to-end suite under software rendering. Set E2E_XVFB=1 to run it under
