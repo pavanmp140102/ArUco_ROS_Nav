@@ -23,6 +23,7 @@ import threading
 import time
 import unittest
 
+from action_msgs.msg import GoalStatus
 from ament_index_python.packages import get_package_share_directory
 from dockbot_interfaces.action import Dock
 from dockbot_interfaces.msg import DockingState
@@ -36,6 +37,7 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.qos import qos_profile_sensor_data
 from scoring import dock_score, yaml_markers, yaw_of
+from sim_cleanup import isolate_gazebo
 import yaml
 
 STATE_NAMES = {0: 'IDLE', 1: 'SEARCH', 2: 'APPROACH', 3: 'FINAL', 4: 'RECOVER',
@@ -49,6 +51,8 @@ MAX_LATERAL = 0.03
 MAX_HEADING = math.radians(5.0)
 # Contact check: the front face must never get closer than this to the marker plane.
 MIN_FRONT_GAP = 0.05
+# A sample counts as being in front of a marker when the lateral offset is below this [m].
+CONTACT_HALF_WIDTH = 0.15
 # Radius of the robot footprint about base_link (half the chassis diagonal), for keep-out zones.
 ROBOT_RADIUS = 0.19
 
@@ -80,6 +84,7 @@ def generate_test_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('dockbot_bringup'), 'launch', 'dock.launch.py')),
         launch_arguments=args.items())
+    isolate_gazebo()
     return LaunchDescription([
         # Discovery over the loopback interface keeps Gazebo reachable on machines whose
         # network interfaces do not carry multicast.
@@ -184,10 +189,19 @@ class TestScenario(unittest.TestCase):
         req = ('name: "dockbot", position: {x: %f, y: %f, z: 0.01}, '
                'orientation: {z: %f, w: %f}' % (
                    pose['x'], pose['y'], math.sin(pose['yaw'] / 2), math.cos(pose['yaw'] / 2)))
-        subprocess.run(
+        done = subprocess.run(
             ['gz', 'service', '-s', '/world/%s/set_pose' % self.scenario['world'],
              '--reqtype', 'gz.msgs.Pose', '--reptype', 'gz.msgs.Boolean',
-             '--timeout', '5000', '--req', req], check=True, capture_output=True)
+             '--timeout', '5000', '--req', req], capture_output=True, text=True)
+        # gz exits 0 even when the reply is "data: false", so the reply is read as well.
+        self.assertTrue(
+            done.returncode == 0 and 'true' in done.stdout.lower(),
+            'set_pose failed: exit %d, reply %r, error %r' % (
+                done.returncode, done.stdout.strip(), done.stderr.strip()))
+        # The robot must really be at the new pose before it is judged to be stationary: the
+        # previous dock is stationary too, so settling alone would not notice a failed move.
+        self.wait(lambda: math.hypot(self.truth[1] - pose['x'], self.truth[2] - pose['y']) < 0.1,
+                  30, 'the robot to arrive at the reset pose')
         self.wait(lambda: self.stationary_for(1.0), 30, 'the robot to settle after the reset')
 
     def send_goal(self, goal):
@@ -202,9 +216,29 @@ class TestScenario(unittest.TestCase):
         return handle
 
     def wait_result(self, handle, sim_seconds):
-        """Wait for the action result and return it."""
+        """
+        Wait for the action result and return it.
+
+        If the goal has reached a final status but its result has not arrived after five
+        seconds of simulation time, the result is requested once more and the event is
+        printed, so a lost reply is visible in the log instead of failing the run silently.
+        """
+        final = (GoalStatus.STATUS_SUCCEEDED, GoalStatus.STATUS_ABORTED,
+                 GoalStatus.STATUS_CANCELED)
         future = handle.get_result_async()
-        self.wait(future.done, sim_seconds, 'the action result')
+        t0, w0, final_since, retried = self.sim_now(), time.time(), None, False
+        while not future.done():
+            now = self.sim_now()
+            if handle.status in final and final_since is None:
+                final_since = now
+            if final_since is not None and not retried and now - final_since > 5.0:
+                print('E2E NOTE result not delivered %.1f s after final status %d; requesting '
+                      'it again' % (now - final_since, handle.status))
+                future, retried = handle.get_result_async(), True
+            if now - t0 > sim_seconds or time.time() - w0 > 900.0:
+                self.fail('timed out waiting for the action result (goal status %d; %s)' % (
+                    handle.status, self.diagnostics()))
+            time.sleep(0.05)
         return future.result().result
 
     def test_scenario(self):
@@ -233,6 +267,8 @@ class TestScenario(unittest.TestCase):
         goal_id = int(trial['goal']['marker_id'])
         start_index = len(self.trajectory)
         del self.state_log[:]
+        # Forget the previous trial's last state, so the cancel trigger cannot match it.
+        type(self).state = None  # the callback writes the class attribute
         t_start = self.sim_now()
         handle = self.send_goal(trial['goal'])
         expect = trial['expect']
@@ -266,17 +302,27 @@ class TestScenario(unittest.TestCase):
 
         # Contact checks apply to every outcome: markers and keep-out zones.
         for marker_id, marker in self.markers.items():
-            lowest = min(dock_score(s[1:], marker)[0] for s in path)
-            near = min(abs(dock_score(s[1:], marker)[1]) for s in path)
-            if near < 0.15:
-                self.assertGreaterEqual(
-                    lowest, MIN_FRONT_GAP,
-                    'front face came within %.3f m of marker %d' % (lowest, marker_id))
+            # Per sample: the front face is closer than MIN_FRONT_GAP to the marker plane while
+            # the robot is in front of that marker (within the robot half width plus a margin).
+            for s in path:
+                front_gap, offset, _ = dock_score(s[1:], marker)
+                self.assertFalse(
+                    offset < CONTACT_HALF_WIDTH and front_gap < MIN_FRONT_GAP,
+                    'front face came within %.3f m of marker %d' % (front_gap, marker_id))
         for zone in self.scenario.get('keep_out', []):
             closest = min(math.hypot(s[1] - zone['x'], s[2] - zone['y']) for s in path)
             self.assertGreater(closest, zone['r'] + ROBOT_RADIUS,
                                'robot touched ' + zone['name'])
 
+        # The scenario's intent: some trials only mean something if the controller went through
+        # certain states in order (E7: approaching, then the marker is lost and it searches).
+        if 'states_in_order' in trial:
+            log = [STATE_NAMES[x][:3] for x in self.state_log]
+            position = 0
+            for wanted in trial['states_in_order']:
+                self.assertIn(wanted, log[position:],
+                              'state %s expected after %s in %s' % (wanted, log[:position], log))
+                position += log[position:].index(wanted) + 1
         docked_ok = (result.outcome == 0 and result.success and
                      abs(gap - GAP_NOMINAL) <= GAP_TOLERANCE and lateral <= MAX_LATERAL and
                      heading <= MAX_HEADING)
@@ -288,6 +334,9 @@ class TestScenario(unittest.TestCase):
             if not docked_ok:
                 self.assertNotEqual(result.outcome, 0, 'reported docked but not in tolerance')
                 self.assertTrue(self.stationary_for(1.0), 'robot still moving after the failure')
+            allowed = trial.get('outcomes')
+            if allowed is not None:
+                self.assertIn(outcome, allowed, 'unexpected outcome')
         elif expect == 'target_not_found':
             self.assertEqual(outcome, 'TARGET_NOT_FOUND')
             self.assertTrue(self.stationary_for(1.0), 'robot still moving after the failure')

@@ -24,7 +24,6 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -48,23 +47,16 @@ def generate_launch_description():
             os.path.join(gazebo_share, 'launch', 'sim.launch.py')),
         launch_arguments={name: LaunchConfiguration(name) for name in passthrough}.items())
 
-    detector = Node(
-        package='dockbot_perception',
-        executable='aruco_detector',
-        name='aruco_detector',
-        parameters=[os.path.join(perception_share, 'config', 'detector.yaml')],
-        output='screen')
+    # The detector and the controller are started through their own launch files, so a
+    # parameter or remapping added there reaches the demo and the tests without a second edit.
+    detector = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(perception_share, 'launch', 'detector.launch.py')))
 
-    controller = Node(
-        package='dockbot_docking',
-        executable='docking_controller',
-        name='docking_controller',
-        parameters=[
-            os.path.join(docking_share, 'config', 'controller.yaml'),
-            {'autostart_marker_id': ParameterValue(
-                LaunchConfiguration('marker_id'), value_type=int)},
-        ],
-        output='screen')
+    controller = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(docking_share, 'launch', 'controller.launch.py')),
+        launch_arguments={'autostart_marker_id': LaunchConfiguration('marker_id')}.items())
 
     rviz = Node(
         package='rviz2',

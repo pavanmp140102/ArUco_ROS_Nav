@@ -111,8 +111,11 @@ VelocityCommand final_command(const DockErrors & errors, const ControlParams & p
 {
   VelocityCommand cmd;
   const double to_go = errors.d - params.front_offset - params.dock_distance;
-  cmd.v = std::clamp(
-    params.final_slow_gain * to_go, kMinFinalSpeedFactor * params.v_final, params.v_final);
+  // min/max rather than clamp: clamp is undefined when the bounds cross, which a zero or
+  // negative v_final would cause.
+  cmd.v = std::min(
+    params.v_final,
+    std::max(kMinFinalSpeedFactor * params.v_final, params.final_slow_gain * to_go));
   cmd.w = std::clamp(
     params.final_heading_gain * errors.psi + params.final_lateral_gain * errors.e_y,
     -params.w_max, params.w_max);

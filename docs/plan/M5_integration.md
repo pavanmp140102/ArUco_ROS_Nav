@@ -45,7 +45,7 @@ src/dockbot_bringup/test/{scoring.py,test_scoring.py,test_e2e.py}
 ## Gate
 
 - [x] E1 to E12 pass in three consecutive full runs (results table in `test_plan.md`).
-- [ ] All earlier gates still pass (re-run after the review fixes).
+- [x] All earlier gates still pass (re-run after the review fixes).
 
 ## Notes
 

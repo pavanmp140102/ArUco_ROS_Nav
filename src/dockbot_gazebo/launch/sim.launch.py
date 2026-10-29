@@ -38,14 +38,18 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def _nvidia_usable():
     """
-    Return True when an NVIDIA GPU with a loaded driver is present.
+    Return True when this host has an NVIDIA GPU with a loaded driver and is not a container.
 
-    Lets the default choose the NVIDIA GPU where there is one and fall back to the portable
-    setting everywhere else, including Docker and CI, where requesting NVIDIA would fail.
+    Lets the default choose the NVIDIA GPU on a workstation and fall back to the portable
+    setting everywhere else. Inside a container nvidia-smi can succeed without a usable
+    OpenGL stack, so containers keep the portable setting; the NVIDIA service of the Docker
+    setup passes gpu:=nvidia explicitly.
     """
+    if os.path.exists('/.dockerenv'):
+        return False
     try:
         return subprocess.run(
-            ['nvidia-smi', '-L'], capture_output=True, timeout=10).returncode == 0
+            ['nvidia-smi', '-L'], capture_output=True, timeout=3).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
 

@@ -13,4 +13,8 @@ keep_out:
 trials:
   - goal: {marker_id: 2}
     expect: docked_or_stopped
+    # The pillar must interrupt the approach (APP, then the marker is lost and SEA), and the
+    # goal may only end docked or with the target lost.
+    states_in_order: [SEA, APP, SEA]
+    outcomes: [DOCKED, TARGET_LOST]
     time_limit: 150.0

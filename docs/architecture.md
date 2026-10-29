@@ -200,7 +200,7 @@ The repository carries one multi-stage `docker/Dockerfile` and a `docker/compose
 - **Stages.** `base` (the official `ros:jazzy-ros-base` image plus everything `rosdep` resolves from the manifests), `dev` (tools and a non-root user, source mounted from the host), and `runtime` (source copied in and built).
 - **Services.** `test` and `test-e2e` run the suites headless; `sim` and `sim-nvidia` run the demo with windows on the host display; `dev` gives a shell.
 - **One container runs the whole system.** The simulator, bridges, both nodes, and RViz share it, so nothing depends on ROS discovery between containers.
-- **Graphics.** The `gpu` launch argument takes `auto` (the default: NVIDIA when a working NVIDIA driver is found, otherwise `intel`), `intel`, `nvidia`, or `software`. Software rendering works anywhere, including CI, at the cost of speed. Because all controller and test timing uses simulation time, a slow renderer changes how long a run takes, not whether it passes.
+- **Graphics.** The `gpu` launch argument takes `auto` (the default: NVIDIA when a working NVIDIA driver is found on a host that is not a container, otherwise `intel`), `intel`, `nvidia`, or `software`. Software rendering works anywhere, including CI, at the cost of speed. Because all controller and test timing uses simulation time, a slow renderer changes how long a run takes, not whether it passes.
 
 Nothing in the nodes or launch files may depend on the host: no absolute paths, no assumptions about a home directory, resources located through `ament_index`.
 

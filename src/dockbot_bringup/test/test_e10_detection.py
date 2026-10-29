@@ -32,6 +32,7 @@ import pytest
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from scoring import marker_in_base, wrap, yaw_of
+from sim_cleanup import isolate_gazebo
 import yaml
 
 
@@ -70,6 +71,7 @@ def generate_test_description():
     detector = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(share('dockbot_perception'), 'launch', 'detector.launch.py')))
+    isolate_gazebo()
     return LaunchDescription([
         # Discovery over the loopback interface keeps Gazebo reachable on machines whose
         # network interfaces do not carry multicast.

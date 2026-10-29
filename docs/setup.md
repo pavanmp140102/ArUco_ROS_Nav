@@ -52,7 +52,7 @@ __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
   ros2 launch dockbot_bringup dock.launch.py
 ```
 
-`sim.launch.py` takes a `gpu` argument (`auto`, `intel`, `nvidia` or `software`) that sets these variables, so the command above becomes `gpu:=nvidia`. The default, `auto`, uses the NVIDIA GPU when `nvidia-smi` finds one with a working driver and the integrated GPU otherwise, so the same command works unchanged in Docker and on machines without an NVIDIA GPU.
+`sim.launch.py` takes a `gpu` argument (`auto`, `intel`, `nvidia` or `software`) that sets these variables, so the command above becomes `gpu:=nvidia`. The default, `auto`, uses the NVIDIA GPU when `nvidia-smi` finds one with a working driver on the host, and the integrated GPU otherwise (and always inside a container, where `nvidia-smi` can succeed without a usable OpenGL stack; the NVIDIA Docker service passes `gpu:=nvidia`), so the same command works unchanged in Docker and on machines without an NVIDIA GPU.
 
 Check what is in use:
 

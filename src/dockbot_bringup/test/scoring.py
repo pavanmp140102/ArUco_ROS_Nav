@@ -15,6 +15,9 @@
 """Scoring helpers for the end-to-end tests: ground-truth geometry, not a ROS node."""
 
 import math
+import os
+
+import yaml
 
 
 def yaw_of(q):
@@ -73,14 +76,16 @@ def dock_score(robot_xy_yaw, marker, front_offset=0.15):
 
 def yaml_markers(scenario, gazebo_share):
     """
-    Return {id: {x, y, yaw}} for scoring: the scenario's own markers, else config/markers.yaml.
+    Return {id: {x, y, yaw}} for scoring a scenario.
 
-    markers.yaml is the single source of truth for docking_world; scenarios that use another
-    world (single_dock) list their marker poses in the scenario file instead.
+    docking_world scenarios always use config/markers.yaml, the single source of truth for
+    where its markers are. Scenarios in another world (single_dock) must list every marker of
+    that world in the scenario file; listing markers for docking_world is an error, so the
+    scenario and the source of truth cannot drift apart.
     """
-    import os
-    import yaml
     if 'markers' in scenario:
+        if scenario.get('world') == 'docking_world':
+            raise ValueError('docking_world scenarios use config/markers.yaml, not their own list')
         return {int(k): v for k, v in scenario['markers'].items()}
     with open(os.path.join(gazebo_share, 'config', 'markers.yaml')) as f:
         return {int(k): v for k, v in yaml.safe_load(f)['markers'].items()}

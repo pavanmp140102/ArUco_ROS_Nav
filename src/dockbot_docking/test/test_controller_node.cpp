@@ -27,6 +27,9 @@
 #include <vector>
 
 #include "dockbot_docking/docking_controller.hpp"
+#include "dockbot_interfaces/msg/aruco_marker.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "kinematic_sim.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
@@ -181,4 +184,90 @@ TEST_F(ControllerNode, ControlLoopFollowsSimulationTime)
   }
   EXPECT_GE(f.states.size(), 5u);
   f.client->async_cancel_goal(handle);
+}
+
+// Goals sent back to back, some cancelled mid-way, each answered with a result, and none left
+// hanging. The node runs on a simulated clock driven faster than real time, with a kinematic robot
+// and camera closing the loop, so a dozen goals take seconds instead of the minutes of Gazebo.
+TEST_F(ControllerNode, BackToBackGoalsAllReturnResults)
+{
+  using dockbot_docking::testing::CameraModel;
+  using dockbot_docking::testing::KinematicSim;
+  using dockbot_docking::testing::Pose2D;
+  Fixture f(true);
+  auto clock_pub = f.helper->create_publisher<rosgraph_msgs::msg::Clock>("clock", 10);
+  auto marker_pub = f.helper->create_publisher<dockbot_interfaces::msg::ArucoMarkerArray>(
+    "aruco/markers", 10);
+  dockbot_docking::VelocityCommand cmd;
+  auto cmd_sub = f.helper->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "cmd_vel", 10, [&cmd](geometry_msgs::msg::TwistStamped::ConstSharedPtr m) {
+      cmd.v = m->twist.linear.x;
+      cmd.w = m->twist.angular.z;
+    });
+
+  const double dt = 0.05;
+  double now = 100.0;
+  auto tick = [&](KinematicSim & sim) {
+      now += dt;
+      rosgraph_msgs::msg::Clock c;
+      c.clock = rclcpp::Time(static_cast<int64_t>(now * 1e9));
+      clock_pub->publish(c);
+      f.executor.spin_some(milliseconds(3));
+      sim.step(cmd, dt);
+      dockbot_interfaces::msg::ArucoMarkerArray array;
+      array.header.stamp = c.clock;
+      array.header.frame_id = "base_link";
+      if (const auto pose = sim.observe()) {
+        dockbot_interfaces::msg::ArucoMarker m;
+        m.id = 0;
+        m.pose.position.x = pose->translation().x();
+        m.pose.position.y = pose->translation().y();
+        m.pose.position.z = pose->translation().z();
+        const Eigen::Quaterniond q(pose->linear());
+        m.pose.orientation.w = q.w();
+        m.pose.orientation.x = q.x();
+        m.pose.orientation.y = q.y();
+        m.pose.orientation.z = q.z();
+        array.markers.push_back(m);
+      }
+      marker_pub->publish(array);
+      f.executor.spin_some(milliseconds(3));
+    };
+
+  tick(*std::make_unique<KinematicSim>(Pose2D{}, Eigen::Vector2d(0, 0), 0.0, CameraModel{}, 1));
+  const int goals = 12;
+  int docked = 0;
+  int canceled = 0;
+  for (int i = 0; i < goals; ++i) {
+    const double y = (i % 2 == 0 ? 0.6 : -0.6);
+    KinematicSim sim(
+      Pose2D{2.0, y, std::atan2(-y, -2.0)}, Eigen::Vector2d(0, 0), 0.0, CameraModel{}, 10 + i);
+    cmd = dockbot_docking::VelocityCommand();
+    auto handle = f.send(make_goal(0));
+    ASSERT_NE(handle, nullptr) << "goal " << i << " was rejected";
+    auto result_future = f.client->async_get_result(handle);
+    const bool cancel_this = i % 3 == 2;
+    double t_sent = now;
+    bool cancel_sent = false;
+    while (result_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+      ASSERT_LT(now - t_sent, 200.0) << "goal " << i << " never returned a result";
+      tick(sim);
+      if (cancel_this && !cancel_sent && now - t_sent > 4.0) {
+        f.client->async_cancel_goal(handle);
+        cancel_sent = true;
+      }
+    }
+    const auto wrapped = result_future.get();
+    if (wrapped.code == rclcpp_action::ResultCode::SUCCEEDED) {
+      EXPECT_EQ(wrapped.result->outcome, Dock::Result::OUTCOME_DOCKED) << "goal " << i;
+      ++docked;
+    } else if (wrapped.code == rclcpp_action::ResultCode::CANCELED) {
+      EXPECT_TRUE(cancel_this) << "goal " << i << " cancelled without a request";
+      ++canceled;
+    } else {
+      ADD_FAILURE() << "goal " << i << " ended with code " << static_cast<int>(wrapped.code);
+    }
+  }
+  EXPECT_EQ(docked + canceled, goals);
+  EXPECT_EQ(canceled, goals / 3);
 }
