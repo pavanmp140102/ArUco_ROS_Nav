@@ -207,6 +207,8 @@ TEST_F(ControllerNode, BackToBackGoalsAllReturnResults)
 
   const double dt = 0.05;
   double now = 100.0;
+  // Advances the simulated clock one step, drives the robot with the last command and publishes
+  // the marker the camera would see, so the controller under test closes the docking loop.
   auto tick = [&](KinematicSim & sim) {
       now += dt;
       rosgraph_msgs::msg::Clock c;
@@ -234,7 +236,8 @@ TEST_F(ControllerNode, BackToBackGoalsAllReturnResults)
       f.executor.spin_some(milliseconds(3));
     };
 
-  tick(*std::make_unique<KinematicSim>(Pose2D{}, Eigen::Vector2d(0, 0), 0.0, CameraModel{}, 1));
+  KinematicSim idle_sim(Pose2D{}, Eigen::Vector2d(0, 0), 0.0, CameraModel{}, 1);
+  tick(idle_sim);
   const int goals = 12;
   int docked = 0;
   int canceled = 0;

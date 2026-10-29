@@ -45,7 +45,7 @@ def _nvidia_usable():
     OpenGL stack, so containers keep the portable setting; the NVIDIA service of the Docker
     setup passes gpu:=nvidia explicitly.
     """
-    if os.path.exists('/.dockerenv'):
+    if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
         return False
     try:
         return subprocess.run(

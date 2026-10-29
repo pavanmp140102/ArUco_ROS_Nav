@@ -1,6 +1,7 @@
 # E7: pillar_occluder interrupts the view of marker 2 on the way. Either docked within tolerance,
 # or FAILED with the robot stopped. No collision either way (keep_out lists the obstacles:
-# centre, radius of the footprint, from docs/world_and_robot.md).
+# centre and the radius of the circle around the obstacle, from docs/world_and_robot.md; the
+# test adds the robot's own radius, so the check is conservative: a pass closer than that fails).
 description: docking_world, a pillar blocks the view of the goal marker
 world: docking_world
 spawn: {x: 2.0, y: 0.9, yaw: 2.51}

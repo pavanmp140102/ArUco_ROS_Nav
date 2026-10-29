@@ -67,3 +67,5 @@ def test_yaml_markers_sources(tmp_path):
     assert list(yaml_markers({'world': 'docking_world'}, str(share))) == [4]
     with pytest.raises(ValueError):
         yaml_markers({'world': 'docking_world', 'markers': {0: {}}}, str(share))
+    with pytest.raises(ValueError):  # a single_dock scenario must not fall back to another world
+        yaml_markers({'world': 'single_dock'}, str(share))

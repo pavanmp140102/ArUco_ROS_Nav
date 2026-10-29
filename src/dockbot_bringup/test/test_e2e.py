@@ -59,8 +59,8 @@ ROBOT_RADIUS = 0.19
 
 def load_scenario():
     """Read the scenario file named by the SCENARIO environment variable."""
-    # APPEND_ENV in CMake joins values to the variable with a colon, so a leading one is dropped.
-    name = os.environ['SCENARIO'].strip(':')
+    # APPEND_ENV in CMake joins values to any inherited value with a colon; ours comes last.
+    name = os.environ['SCENARIO'].split(':')[-1]
     path = os.path.join(
         get_package_share_directory('dockbot_bringup'), 'config', 'scenarios', name + '.yaml')
     with open(path) as f:
@@ -175,7 +175,12 @@ class TestScenario(unittest.TestCase):
     def stationary_for(self, seconds):
         """Return True if the robot moved under 5 mm and turned under 0.01 rad over seconds."""
         now = self.sim_now()
-        recent = [s for s in self.trajectory[-400:] if s[0] >= now - seconds]
+        recent = []
+        for s in reversed(self.trajectory):  # newest first, up to `seconds` back
+            if s[0] < now - seconds:
+                break
+            recent.append(s)
+        recent.reverse()
         if not recent or recent[0][0] > now - seconds + 0.3:
             return False
         xs = [s[1] for s in recent]

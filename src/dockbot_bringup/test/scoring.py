@@ -87,5 +87,7 @@ def yaml_markers(scenario, gazebo_share):
         if scenario.get('world') == 'docking_world':
             raise ValueError('docking_world scenarios use config/markers.yaml, not their own list')
         return {int(k): v for k, v in scenario['markers'].items()}
+    if scenario.get('world') != 'docking_world':
+        raise ValueError('scenarios in %r must list their markers' % scenario.get('world'))
     with open(os.path.join(gazebo_share, 'config', 'markers.yaml')) as f:
         return {int(k): v for k, v in yaml.safe_load(f)['markers'].items()}

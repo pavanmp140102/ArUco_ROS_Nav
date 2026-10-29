@@ -17,6 +17,7 @@
 import atexit
 import os
 import signal
+import uuid
 
 
 def kill_partition(token):
@@ -25,7 +26,8 @@ def kill_partition(token):
 
     The simulator server can outlive the launch that started it. A leftover server publishes a
     second /clock and fails the next docking scenario, so each test removes its own after the
-    launch has shut down.
+    launch has shut down. A test killed by a signal never runs this, so a timeout can still
+    leave a server behind; its partition keeps it away from the next test.
     """
     needle = ('GZ_PARTITION=%s' % token).encode()
     for pid in os.listdir('/proc'):
@@ -46,6 +48,9 @@ def isolate_gazebo():
     A leftover server from an earlier scenario then cannot be seen by the next one, which keeps
     the docking runs independent of each other.
     """
-    token = 'dockbot_%d' % os.getpid()
+    token = 'dockbot_%d_%s' % (os.getpid(), uuid.uuid4().hex[:8])
     os.environ['GZ_PARTITION'] = token
+    # The test's own `gz service` calls must reach the server the launch starts, which is
+    # pinned to loopback; the launch's SetEnvironmentVariable does not reach this process.
+    os.environ['GZ_IP'] = '127.0.0.1'
     atexit.register(kill_partition, token)
