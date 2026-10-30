@@ -2,7 +2,7 @@
 
 Design and planning documents for the ArUco autonomous docking simulation (ROS 2 Jazzy + Gazebo Harmonic).
 
-**Status:** design complete, implementation under way (see the milestone checklists in [plan/](plan/)). Documents describe the intended system and are updated as the matching code lands.
+**Status:** the system is built and tested (see the milestone checklists in [plan/](plan/)). The documents describe it as it is, and the parameter defaults in [interfaces.md](interfaces.md) and the world and marker poses in [world_and_robot.md](world_and_robot.md) were checked against the code and the world files.
 
 | Document | What it covers |
 |---|---|

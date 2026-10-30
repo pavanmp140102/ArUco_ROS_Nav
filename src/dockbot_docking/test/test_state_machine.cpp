@@ -55,6 +55,7 @@ Eigen::Isometry3d pose_at(double d, double e_y)
 /// Drives a state machine with a fake clock and scripted detections.
 struct Harness
 {
+  /// Create a machine with pose smoothing off, so scripted poses reach the control law as is.
   explicit Harness(MachineParams p = MachineParams())
   : machine((p.pose_filter_alpha = 1.0, p)) {}
 
@@ -93,6 +94,7 @@ struct Harness
   StepOutput last;
 };
 
+/// Build a docking request for the test marker; zero means use the machine's own setting.
 GoalRequest goal(double dock_distance = 0.0, double timeout = 0.0)
 {
   GoalRequest g;

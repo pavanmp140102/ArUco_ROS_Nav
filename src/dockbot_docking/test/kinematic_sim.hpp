@@ -142,7 +142,10 @@ public:
   /// True errors (d, e_y, psi, bearing, range) from base_link, using the exact pose.
   DockErrors true_errors() const {return compute_errors(true_pose());}
 
+  /// The robot's true pose, so a test can score where the controller left it.
   const Pose2D & robot() const {return robot_;}
+
+  /// Simulated time elapsed, to compare a docking run against its time limit.
   double time() const {return time_;}
 
 private:

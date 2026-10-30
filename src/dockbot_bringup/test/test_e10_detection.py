@@ -59,6 +59,7 @@ DISTANCES = _SCENARIO['distances']  # base_link to marker plane [m]
 def generate_test_description():
     """Start headless single_dock and the detector; the nodes under test see no ground truth."""
     def share(pkg):
+        """Return a package's share directory, where its launch files live."""
         return get_package_share_directory(pkg)
 
     sim_args = {'world': 'single_dock', 'headless': 'true', 'x': '0.0'}
@@ -149,6 +150,7 @@ class TestDetectionAgainstGroundTruth(unittest.TestCase):
                 t_ready = self.node.get_clock().now().nanoseconds * 1e-9 + 1.5
 
                 def fresh():
+                    """Return True once a detection and a true pose newer than the move arrive."""
                     m, t = self.markers, self.truth
                     return (m is not None and m.markers and t is not None and
                             stamp(m.header) > t_ready and stamp(t.header) > t_ready)

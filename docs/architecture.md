@@ -8,7 +8,7 @@ These were checked on the development machine and shape several choices below.
 
 | Item | Finding | Consequence |
 |---|---|---|
-| ROS and simulator | ROS 2 Jazzy on Ubuntu 24.04, Gazebo Harmonic (`gz sim` 8.15), `ros_gz_sim`, `ros_gz_bridge`, `ros_gz_image`, `xacro`, `robot_state_publisher`, `rviz2`, `colcon` | The core path needs no extra installs |
+| ROS and simulator | ROS 2 Jazzy on Ubuntu 24.04, Gazebo Harmonic (`gz sim` 8.15), `ros_gz_sim`, `ros_gz_bridge`, `ros_gz_image`, `xacro`, `robot_state_publisher`, `rviz2`, `colcon` | `rosdep install --from-paths src --ignore-src -y` installs everything the packages declare; see [setup.md](setup.md) |
 | OpenCV | 4.6.0 (`libopencv-dev`, `libopencv-contrib-dev`). Only the legacy ArUco API exists (`cv::aruco::detectMarkers`, `drawMarker`); `cv::aruco::ArucoDetector` does not. `SOLVEPNP_IPPE_SQUARE` is available | The detector wraps both API generations behind one function, selected at compile time, and estimates pose with `solvePnPGeneric` rather than `estimatePoseSingleMarkers`, which newer OpenCV removed |
 | C++ toolchain | g++ 13.3, CMake 3.28, Eigen 3.4, `rclcpp`, `rclcpp_action`, `rclcpp_components`, `cv_bridge`, `tf2_eigen`, `ament_cmake_gtest`, and the `ament_cmake` linters | Nodes can be built in C++ with nothing further to install |
 | Graphics | Intel UHD (Mesa) and an entry-level NVIDIA GeForce with 2 GB, in on-demand mode: programs render on Intel unless told to use NVIDIA. Both provide OpenGL 4.6 | Either GPU can run the simulator. The camera is modelled on an IMX219 at 1280x720 and 30 Hz, which is a real load for an entry-level card. M1 measures both GPUs and picks the default; the camera rate is a launch argument if neither holds 30 Hz. See [setup.md](setup.md) |

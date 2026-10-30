@@ -1,6 +1,6 @@
 # Node interfaces
 
-Planned topics, actions, messages, and parameters. Defaults here are starting values; tuning during M4 and M5 may change them, and this file must be updated when they do.
+Topics, actions, messages and parameters as built. The parameter defaults below were checked against the values the nodes declare and against the YAML files in `config/` (M6); update this file whenever a default changes.
 
 ## Topics
 
@@ -11,7 +11,7 @@ Planned topics, actions, messages, and parameters. Defaults here are starting va
 | `/aruco/markers` | `dockbot_interfaces/ArucoMarkerArray` | `aruco_detector` | `docking_controller` | One message per image, empty when nothing is seen. Poses in `base_link` |
 | `/aruco/debug_image` | `sensor_msgs/Image` | `aruco_detector` | RViz | Marker outlines, IDs, axes. Optional |
 | `/cmd_vel` | `geometry_msgs/TwistStamped` | `docking_controller` | `ros_gz_bridge` to DiffDrive | 20 Hz while a goal is active |
-| `/docking/state` | `dockbot_interfaces/DockingState` | `docking_controller` | RViz, tests | 20 Hz |
+| `/docking/state` | `dockbot_interfaces/DockingState` | `docking_controller` | tests, `ros2 topic echo` | 20 Hz while a goal is active; one IDLE message when it ends, then nothing. RViz has no display for this type |
 | `/odom` | `nav_msgs/Odometry` | `ros_gz_bridge` | RViz only | Not used for control |
 | `/joint_states` | `sensor_msgs/JointState` | `ros_gz_bridge` | `robot_state_publisher` | |
 | `/tf`, `/tf_static` | `tf2_msgs/TFMessage` | `robot_state_publisher`, bridge, `aruco_detector` | all | Detector adds `base_link -> aruco_<id>` |

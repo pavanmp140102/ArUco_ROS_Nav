@@ -1,6 +1,6 @@
 # World and robot model
 
-Dimensions here are the design targets. The Xacro, the world file, and `config/markers.yaml` are authoritative once they exist; keep this document in step with them.
+The Xacro, the world file and `config/markers.yaml` are authoritative; this document was checked against them (M6), and must be kept in step when they change.
 
 ## Robot: `dockbot`
 
@@ -29,7 +29,7 @@ Dimensions here are the design targets. The Xacro, the world file, and `config/m
 | Vertical field of view | 37.5 degrees |
 | Frame rate | 30 Hz |
 | Frame | `camera_optical_frame`, set as the sensor's `gz_frame_id` |
-| Noise | None initially. Gaussian noise is added for robustness tests in M5 |
+| Noise | None by default. The `camera_noise` launch argument adds Gaussian noise of that standard deviation (test E11 uses it) |
 | Distortion | None. A real IMX219 lens distorts; see the real camera item in M7 |
 
 Width, height, field of view, and rate are Xacro arguments with the values above as defaults. The launch files expose `camera_rate` so that slow renderers (software rendering in CI) can lower it. The detector takes its intrinsics from `CameraInfo`, so no node depends on these numbers.
@@ -110,7 +110,7 @@ Markers sit on 0.05 m thick plates. Walls carry markers 0 to 3 directly. Marker 
 
 `pillar_occluder` lies on the line of sight from (2.0, 0.5) to marker 2. A robot placed at (2.0, 0.5) with yaw 2.44 rad does not see marker 2 (checked with plain OpenCV detection on a camera frame), while from the default spawn at the origin the marker is visible. That pose never sees marker 2, so it cannot test an interruption during approach. The E7 spawn is (2.0, 0.9) with yaw 2.51 rad: marker 2 is in view at the start, the robot approaches, the pillar then blocks the view, and the goal ends `TARGET_LOST` with the robot stopped and clear of every obstacle. A start at (2.2, 1.0) with yaw 2.45 rad showed the limit of a controller without obstacle sensing: it alternated between search and approach until the timeout and passed within about 1 cm of `pillar_1`.
 
-The obstacle `box_a` was moved from (2.6, -1.2) to (2.6, -1.6) in M5. From the dock in front of marker 4 the line of sight to marker 0 passed through its corner, which made test E12 (marker 4, then marker 0) impossible. (`images/world_layout.png` still shows the old position.)
+The obstacle `box_a` was moved from (2.6, -1.2) to (2.6, -1.6) in M5. From the dock in front of marker 4 the line of sight to marker 0 passed through its corner, which made test E12 (marker 4, then marker 0) impossible. The plan view above is drawn from the world file by `images/world_layout.py`, so it shows the current layout.
 
 The default spawn sees every marker by turning in place, and each is detected by plain OpenCV on a camera frame. Marker plates are white, but the scene is lit with ambient light of 0.9, so they render light grey; detection is unaffected.
 

@@ -16,8 +16,10 @@ sudo apt install \
   ros-jazzy-launch-testing ros-jazzy-launch-testing-ros ros-jazzy-launch-testing-ament-cmake \
   ros-jazzy-ament-cmake-gtest ros-jazzy-ament-lint-common \
   ros-jazzy-teleop-twist-keyboard \
-  libopencv-dev libopencv-contrib-dev libeigen3-dev python3-opencv
+  libopencv-dev libopencv-contrib-dev libeigen3-dev python3-opencv python3-yaml liburdfdom-tools
 ```
+
+The other ROS packages the workspace declares (`rclcpp`, `rclcpp_action`, the message packages, `launch_ros`, the `ament` tools) come with `ros-jazzy-desktop`. The authoritative list is the `package.xml` files; to install exactly what they declare, run `rosdep install --from-paths src --ignore-src -y` from the repository root. The Docker image does this, which is how undeclared dependencies get caught.
 
 ## Worth adding
 
@@ -53,6 +55,17 @@ __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
 ```
 
 `sim.launch.py` takes a `gpu` argument (`auto`, `intel`, `nvidia` or `software`) that sets these variables, so the command above becomes `gpu:=nvidia`. The default, `auto`, uses the NVIDIA GPU when `nvidia-smi` finds one with a working driver on the host, and the integrated GPU otherwise (and always inside a container, where `nvidia-smi` can succeed without a usable OpenGL stack; the NVIDIA Docker service passes `gpu:=nvidia`), so the same command works unchanged in Docker and on machines without an NVIDIA GPU.
+
+Measured on a laptop with an entry-level NVIDIA GPU (M5 and M8, October 2026):
+
+| Run | Result |
+|---|---|
+| End-to-end suite E1 to E12, headless, hardware rendering, on the host | about 19 to 20 minutes |
+| The same suite in Docker, software rendering (`LIBGL_ALWAYS_SOFTWARE=1`) | 27 minutes, every scenario passing |
+| GUI demo through `sim-nvidia` | the NVIDIA GPU at about half load, 430 MiB of video memory |
+| ArUco detection on a 1280x720 frame | roughly 10 ms on a CPU core |
+
+Software rendering is therefore slower but still practical for CI.
 
 Check what is in use:
 

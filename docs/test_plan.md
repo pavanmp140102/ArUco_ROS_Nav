@@ -41,7 +41,7 @@ Measured from Gazebo ground truth (robot pose) and `config/markers.yaml` (marker
 
 ## Perception unit (P)
 
-Inputs are synthetic images: a marker image warped into a blank frame (`cv::warpPerspective`) by projecting its corners with known intrinsics (the planned camera's: 1280x720, focal length 1061 px) and a known pose. The renderer is a C++ test helper. No ROS involved.
+Inputs are synthetic images: a marker image warped into a blank frame (`cv::warpPerspective`) by projecting its corners with known intrinsics (the camera's: 1280x720, focal length 1061 px) and a known pose. The renderer is a C++ test helper. No ROS involved.
 
 | ID | Case | Pass criterion |
 |---|---|---|
@@ -50,7 +50,7 @@ Inputs are synthetic images: a marker image warped into a blank frame (`cv::warp
 | P3 | Three markers with different IDs in one frame | All three IDs returned, each pose within P1 bounds |
 | P4 | Marker from a different dictionary; a mirrored marker | Neither is reported |
 | P5 | Marker cut off by the image edge; marker with one corner covered | Not reported. No pose with wild values |
-| P6 | Optical frame to `base_link` conversion with the planned camera mount | A marker 1 m straight ahead of the camera, facing it, gives x = 0.95 m in `base_link` (the camera sits 0.05 m behind it), y = 0, bearing = 0, and a normal pointing back at the robot |
+| P6 | Optical frame to `base_link` conversion with the camera mount | A marker 1 m straight ahead of the camera, facing it, gives x = 0.95 m in `base_link` (the camera sits 0.05 m behind it), y = 0, bearing = 0, and a normal pointing back at the robot |
 | P7 | Detection wrapper on the installed OpenCV | Returns corners and IDs in the documented shape. The version branch is chosen at compile time, so the branch for 4.7 and later is verified by building and running the same tests against a newer OpenCV when one is available |
 | P8 | Ambiguity handling: marker nearly face-on at 3 m | The solution with lower reprojection error is chosen; the normal points toward the camera, not away |
 
@@ -153,11 +153,25 @@ These prove the project runs on a machine that has only Docker. Details of the i
 | DK8 | Clone and run DK2 and DK4 on a second machine, ideally one with a different GPU or CPU architecture | Both pass with no steps beyond those in the README. Run when such a machine is available |
 | DK9 | `sim-nvidia` service on a machine with an NVIDIA GPU | Same result as DK4, and `nvtop` or `nvidia-smi` on the host shows the Gazebo process on the NVIDIA GPU |
 
+### Docker results (M8, October 2026)
+
+| ID | Result |
+|---|---|
+| DK1 | Not run: the image was built incrementally, not with `--no-cache` from a fresh clone |
+| DK2 | Passed: the `test` service, no display and no GPU, 219 tests and 0 failures in 7 of 9 runs. The other two runs each had a flaky test (a parallel-package ROS-domain clash, fixed by running packages one at a time, and `BackToBackGoalsAllReturnResults`, which then passed 46 further runs). The negative case (a deliberately broken test gives a non-zero exit code) was not run |
+| DK3 | Passed: E1 to E12, software rendering, 27 minutes, no result retries |
+| DK4 | Passed: Gazebo and RViz opened on the host and the robot docked on marker 2 through `sim` |
+| DK5 | Partly: files made by `dev` in the mounted tree belong to the host user. A full workspace build in the mounted tree was not run, to leave the host's `build/` and `install/` alone |
+| DK6 | Passed: after a source-only change every layer up to the workspace build came from cache and `rosdep` did not run again |
+| DK7 | Passed: `rosdep check` reports all dependencies satisfied; the Dockerfile installs no ROS package by hand (only `xvfb`, `mesa-utils` and the development tools) |
+| DK8 | Not run: needs a second machine |
+| DK9 | Passed: `sim-nvidia` and `docker/run.sh` docked on marker 2 with the NVIDIA GPU at about half load |
+
 ## Manual checks (MAN)
 
 | ID | Check |
 |---|---|
-| MAN1 | RViz shows the robot model, the debug image with marker outlines and axes, the `aruco_<id>` frames, and the docking state |
+| MAN1 | RViz shows the robot model, the camera image, the debug image with marker outlines and axes, and the `aruco_<id>` frames. The docking state is read from `/docking/state` (`ros2 topic echo /docking/state`), because RViz has no display for a custom message. Checked 2026-10-30 during a dock to marker 4: the debug image and the marker frame were live, and the state stream showed APPROACH with the target ID, distance and lateral error |
 | MAN2 | The README quick start works on a fresh clone: build, one launch command, one action goal, robot docks |
 | MAN3 | Teleoperation drives the robot and the odometry arrow in RViz follows it |
 
@@ -165,7 +179,7 @@ These prove the project runs on a machine that has only Docker. Details of the i
 
 ```bash
 # everything except Gazebo tests
-colcon test --packages-select dockbot_perception dockbot_docking dockbot_gazebo dockbot_description
+colcon test --executor sequential --packages-select dockbot_perception dockbot_docking dockbot_gazebo dockbot_description
 colcon test-result --verbose
 
 # end to end

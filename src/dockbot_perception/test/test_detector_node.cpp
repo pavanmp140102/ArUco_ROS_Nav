@@ -55,6 +55,7 @@ constexpr double kPi = 3.14159265358979323846;
 class DetectorNodeTest : public ::testing::Test
 {
 protected:
+  /// Start rclcpp and load the camera model and dictionary the tests render markers with.
   void SetUp() override
   {
     rclcpp::init(0, nullptr);
@@ -62,6 +63,7 @@ protected:
     dict_ = dockbot_perception::get_dictionary("DICT_4X4_50");
   }
 
+  /// Release the executor and shut rclcpp down so the next test starts clean.
   void TearDown() override
   {
     executor_.reset();
@@ -125,6 +127,7 @@ protected:
     static_broadcaster_->sendTransform(tf);
   }
 
+  /// Publish the camera intrinsics the detector needs before it can estimate marker poses.
   void publish_info()
   {
     sensor_msgs::msg::CameraInfo info;
