@@ -44,6 +44,7 @@ namespace
 /// Node, executor, action client and state recorder, run in one thread like the real node.
 struct Fixture
 {
+  /// Start the controller node and a helper that sends goals and records its output.
   explicit Fixture(bool sim_time = false)
   {
     rclcpp::NodeOptions options;

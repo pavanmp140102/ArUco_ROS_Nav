@@ -7,7 +7,7 @@
 ## Sub-tasks
 
 - [x] `README.md`: what the project is, prerequisites (apt packages), build, the one-command demo, how to send a goal to a different marker, how to run the tests, a screenshot or short clip.
-- [x] Bring [../architecture.md](../architecture.md) in line with the code: no "planned" wording, the trajectory plot from M4 is in. An RViz screenshot taken during a dock (`docs/images/rviz_docking.png`) is left for later.
+- [ ] Bring [../architecture.md](../architecture.md) in line with the code: no "planned" wording, the trajectory plot from M4 is in. An RViz screenshot taken during a dock (`docs/images/rviz_docking.png`) is left for later.
 - [x] Bring [../interfaces.md](../interfaces.md) in line: final parameter defaults, any topics added or dropped.
 - [x] Bring [../world_and_robot.md](../world_and_robot.md) in line: final obstacle layout, a top-down image of the world.
 - [x] Add the results table to [../test_plan.md](../test_plan.md).

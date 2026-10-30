@@ -179,7 +179,7 @@ These prove the project runs on a machine that has only Docker. Details of the i
 
 ```bash
 # everything except Gazebo tests
-colcon test --packages-select dockbot_perception dockbot_docking dockbot_gazebo dockbot_description
+colcon test --executor sequential --packages-select dockbot_perception dockbot_docking dockbot_gazebo dockbot_description
 colcon test-result --verbose
 
 # end to end
