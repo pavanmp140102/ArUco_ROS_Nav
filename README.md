@@ -4,7 +4,7 @@ A ROS 2 Jazzy and Gazebo Harmonic simulation in which a differential-drive robot
 
 **Pipeline:** camera image → ArUco detector → marker pose relative to the robot → docking controller → `cmd_vel`. The robot stops with its front face 10 cm from the marker plane.
 
-**Status:** under development, milestone by milestone. The workspace, interfaces, first Docker image, and the robot model with its Gazebo launch are in. The world and markers, detector, controller, and end-to-end tests are next. See [docs/plan/README.md](docs/plan/README.md).
+**Status:** the full pipeline works. In Gazebo the robot finds the marker it was asked for among five, drives to it and stops with its front face within 2 cm of the 10 cm target, from several start poses and with a second marker in view. The end-to-end suite (E1 to E12), the unit tests and the Docker services all pass. What remains is documentation polish and optional extras; see [docs/plan/README.md](docs/plan/README.md).
 
 ## What it looks like
 
@@ -35,7 +35,7 @@ The world plan shows where each marker sits, which way its printed face points, 
   <img src="docs/images/world_layout.png" alt="Plan view of docking_world with marker IDs, facing directions, docking corridors and obstacles" width="65%">
 </p>
 
-What the robot's camera sees from 1.5 m in front of marker 4 (the detector will read this frame):
+What the robot's camera sees from 1.5 m in front of marker 4 (the detector reads this frame):
 
 <p align="center">
   <img src="docs/images/camera_view.png" alt="Camera frame showing marker 4 on its stand" width="55%">
@@ -64,23 +64,32 @@ source install/setup.bash
 # fast tests (no simulator)
 colcon test --packages-select dockbot_perception dockbot_docking dockbot_gazebo dockbot_description
 colcon test-result --verbose
+
+# end-to-end tests E1 to E12 in headless Gazebo (about 20 minutes; one simulator per scenario)
+colcon test --packages-select dockbot_bringup
 ```
 
-Required packages are listed in [docs/setup.md](docs/setup.md). Use the system OpenCV (4.6 on Ubuntu 24.04); do not install another copy.
+Run the packages' tests one package at a time when `dockbot_bringup` is included: its tests start a simulator on the same ROS domain and disturb the others if they run together. Required packages are listed in [docs/setup.md](docs/setup.md). Use the system OpenCV (4.6 on Ubuntu 24.04); do not install another copy.
 
-## Simulation
-
-```bash
-# robot in an empty world; add headless:=true for no GUI, gpu:=nvidia|software to pick the renderer
-ros2 launch dockbot_gazebo sim.launch.py
-```
-
-The full demo (`dock.launch.py` and the `/dock` action) arrives with the integration milestone:
+## Run the demo
 
 ```bash
+# terminal 1: Gazebo, the detector and the controller, with RViz
 ros2 launch dockbot_bringup dock.launch.py world:=docking_world rviz:=true
-ros2 action send_goal /dock dockbot_interfaces/action/Dock "{marker_id: 2}" --feedback
+# add gpu:=nvidia to render on an NVIDIA GPU, or headless:=true for no windows
+
+# terminal 2: dock to marker 4, then to marker 0
+ros2 action send_goal /dock dockbot_interfaces/action/Dock "{marker_id: 4}" --feedback
+ros2 action send_goal /dock dockbot_interfaces/action/Dock "{marker_id: 0}" --feedback
 ```
+
+Markers 0 and 1 sit side by side on purpose: the robot has to pick the one it was asked for. To start docking at launch without a second terminal, add `marker_id:=2`. The `/dock` result reports the outcome (`DOCKED`, `TARGET_NOT_FOUND`, `TARGET_LOST`, `RETRIES_EXCEEDED`, `TIMEOUT` or `CANCELED`) and the final gap, lateral offset and heading error. A goal can be cancelled at any time and the robot stops at once. `single_dock` is a smaller world with one marker, used for most of the end-to-end tests:
+
+```bash
+ros2 launch dockbot_bringup dock.launch.py world:=single_dock x:=1.0 marker_id:=0
+```
+
+The robot alone, in an empty world: `ros2 launch dockbot_gazebo sim.launch.py` (`headless:=true` for no GUI, `gpu:=nvidia|software` to pick the renderer).
 
 ## Docker
 
