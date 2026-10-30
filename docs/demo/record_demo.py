@@ -312,7 +312,8 @@ def main():
     writer = subprocess.Popen(
         ['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'bgr24',
          '-s', '%dx%d' % (WIDTH, HEIGHT), '-r', str(args.fps * args.speed), '-i', '-',
-         '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart', args.output],
+         '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart',
+         args.output],
         stdin=subprocess.PIPE)
     rclpy.init()
     node = DemoRecorder(writer, args.fps, args.speed, args.raw_dir)
