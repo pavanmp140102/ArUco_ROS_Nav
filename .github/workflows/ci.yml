@@ -1,0 +1,56 @@
+# Builds the runtime image and runs the tests in it (see docs/plan/M8_docker.md).
+#   push to main      : unit and lint tests (the `test` service)
+#   pull request->main: the same, and also the headless Gazebo end-to-end suite (the `test-e2e` service)
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A newer push to the same branch makes the older, superseded run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Layers are cached in the GitHub Actions cache, so a source-only change reuses the
+      # dependency layers and only rebuilds the workspace.
+      - name: Build the runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: runtime
+          tags: dockbot:runtime
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Unit and lint tests
+        run: docker compose -f docker/compose.yaml run --rm test
+
+  test-e2e:
+    if: github.event_name == 'pull_request'
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: runtime
+          tags: dockbot:runtime
+          load: true
+          cache-from: type=gha
+      - name: End-to-end tests
+        run: docker compose -f docker/compose.yaml run --rm test-e2e

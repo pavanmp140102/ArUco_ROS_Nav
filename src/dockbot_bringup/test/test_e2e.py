@@ -53,6 +53,9 @@ MAX_HEADING = math.radians(5.0)
 MIN_FRONT_GAP = 0.05
 # A sample counts as being in front of a marker when the lateral offset is below this [m].
 CONTACT_HALF_WIDTH = 0.15
+# Real-time backstop for each wait, in case simulation time stops advancing. The limits that
+# matter are in simulation time; this one is generous so slow software rendering never trips it.
+WALL_LIMIT = float(os.environ.get('E2E_WALL_LIMIT', 2400.0))
 # Radius of the robot footprint about base_link (half the chassis diagonal), for keep-out zones.
 ROBOT_RADIUS = 0.19
 
@@ -150,7 +153,7 @@ class TestScenario(unittest.TestCase):
         """Return the current simulation time in seconds."""
         return self.node.get_clock().now().nanoseconds * 1e-9
 
-    def wait(self, predicate, sim_seconds, what, wall_limit=900.0):
+    def wait(self, predicate, sim_seconds, what, wall_limit=WALL_LIMIT):
         """Poll until predicate() holds; fail after sim_seconds (sim) or wall_limit (real)."""
         t0, w0 = self.sim_now(), time.time()
         while time.time() - w0 < wall_limit:
@@ -240,7 +243,7 @@ class TestScenario(unittest.TestCase):
                 print('E2E NOTE result not delivered %.1f s after final status %d; requesting '
                       'it again' % (now - final_since, handle.status))
                 future, retried = handle.get_result_async(), True
-            if now - t0 > sim_seconds or time.time() - w0 > 900.0:
+            if now - t0 > sim_seconds or time.time() - w0 > WALL_LIMIT:
                 self.fail('timed out waiting for the action result (goal status %d; %s)' % (
                     handle.status, self.diagnostics()))
             time.sleep(0.05)

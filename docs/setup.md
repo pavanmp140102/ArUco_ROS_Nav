@@ -64,7 +64,7 @@ nvtop                      # live view of both GPUs
 
 ## Docker
 
-Docker is the way to run the project on a machine without ROS 2 installed. The image design and the list of services are in [plan/M8_docker.md](plan/M8_docker.md); the image and the `test` and `dev` services exist; `sim`, `sim-nvidia` and `test-e2e` come with M1 and M5.
+Docker is the way to run the project on a machine without ROS 2 installed. The image design and the list of services are in [plan/M8_docker.md](plan/M8_docker.md); all five services (`test`, `test-e2e`, `sim`, `sim-nvidia`, `dev`) and `docker/run.sh` are defined.
 
 What a machine needs:
 
@@ -85,13 +85,34 @@ docker run --rm --gpus all ubuntu:24.04 nvidia-smi    # should list the GPU
 
 The toolkit is optional. Without it the container uses an Intel or AMD GPU, or software rendering.
 
-Commands (`test-e2e`, `sim` and `run.sh` arrive with later milestones):
+Commands:
 
 ```bash
 docker compose -f docker/compose.yaml run --rm test       # fast tests
 docker compose -f docker/compose.yaml run --rm test-e2e   # Gazebo tests, headless
 ./docker/run.sh                                           # demo with GUI; picks the GPU service
 docker compose -f docker/compose.yaml run --rm dev        # development shell, source mounted
+WORLD=docking_world MARKER_ID=2 ./docker/run.sh           # choose the world and the marker to dock at
+```
+
+Graphics paths:
+
+| Host | Service | Notes |
+|---|---|---|
+| Linux, Intel or AMD GPU | `sim` | Mounts `/dev/dri` and the X11 socket. `run.sh` runs `xhost +local:docker` and removes it on exit |
+| Linux, NVIDIA GPU | `sim-nvidia` | Needs the NVIDIA Container Toolkit; `run.sh` picks it when the runtime is registered |
+| Wayland | `sim` | Works through XWayland |
+| No GPU, CI | `test-e2e` | Software rendering (`LIBGL_ALWAYS_SOFTWARE=1`), headless. Set `E2E_XVFB=1` to run under `xvfb-run` if headless EGL fails |
+| Windows 11 with WSL 2 | `sim` | Run the Linux commands inside WSL; WSLg provides the display |
+| macOS | `test` only | No GPU access or X server for the GUI |
+
+With the demo running, send a goal from a second terminal:
+
+```bash
+docker compose -f docker/compose.yaml exec sim \
+  ros2 action send_goal /dock dockbot_interfaces/action/Dock "{marker_id: 2}" --feedback
 ```
 
 Expect the image to take 3 to 4 GB of disk.
+
+The base image is pinned by digest in `docker/Dockerfile`: `ros:jazzy-ros-base@sha256:8eed0a4669bbf43ee331878a4c39bd8ebddea8e3312a58b4fae8edb14526b617`, recorded on 2026-10-30, the image the tests below were run on. To move to a newer base, pull `ros:jazzy-ros-base`, read its digest with `docker buildx imagetools inspect ros:jazzy-ros-base`, run both test services, then replace the digest.

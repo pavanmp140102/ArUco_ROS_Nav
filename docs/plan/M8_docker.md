@@ -61,32 +61,32 @@ Showing windows on the host requires allowing local containers to use the displa
 - [x] Stage `runtime`: copy `src/`, `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release`, keep `build/` so tests can run.
 - [x] Stage `dev`: development tools, non-root user created from `UID` and `GID` build arguments, `ccache` directory as a volume.
 - [x] `docker/entrypoint.sh`: sources `/opt/ros/jazzy/setup.bash` and the workspace's `install/setup.bash` when present, then runs the given command.
-- [ ] Pin the base image by digest once the image is known to work, and record the digest and date in [../setup.md](../setup.md).
+- [x] Pin the base image by digest once the image is known to work, and record the digest and date in [../setup.md](../setup.md).
 
 ### Compose and helper
 
-- [ ] `docker/compose.yaml` with the five services above. Shared settings in one anchor: `ROS_DOMAIN_ID`, `ipc: host`, the X11 socket, `DISPLAY`, `QT_X11_NO_MITSHM=1`.
+- [x] `docker/compose.yaml` with the five services above. Shared settings in one anchor: `ROS_DOMAIN_ID`, `ipc: host`, the X11 socket, `DISPLAY`, `QT_X11_NO_MITSHM=1`.
 - [x] `test` command: `colcon test` on the non-simulator packages, then `colcon test-result --verbose`.
-- [ ] `test-e2e` command: the `dockbot_bringup` tests with `headless:=true`, under software rendering, with `xvfb-run` as the fallback if headless EGL is unavailable.
-- [ ] `sim` and `sim-nvidia` commands: `ros2 launch dockbot_bringup dock.launch.py`, passing through `WORLD` and `MARKER_ID` environment variables.
-- [ ] `docker/run.sh`: display permission, GPU detection, service selection, and a clear message when the NVIDIA toolkit is missing.
+- [x] `test-e2e` command: the `dockbot_bringup` tests with `headless:=true`, under software rendering, with `xvfb-run` as the fallback if headless EGL is unavailable.
+- [x] `sim` and `sim-nvidia` commands: `ros2 launch dockbot_bringup dock.launch.py`, passing through `WORLD` and `MARKER_ID` environment variables.
+- [x] `docker/run.sh`: display permission, GPU detection, service selection, and a clear message when the NVIDIA toolkit is missing.
 
 ### Making the code container-friendly
 
-- [ ] `sim.launch.py`: the `gpu` argument gains a third value, `software`, which sets `LIBGL_ALWAYS_SOFTWARE=1`.
-- [ ] Confirm that no launch file, test, or config uses an absolute host path or assumes a home directory. Everything is found through `ament_index`.
-- [ ] End-to-end test time limits are in simulation time, so slow software rendering does not cause false failures.
+- [x] `sim.launch.py`: the `gpu` argument gains a third value, `software`, which sets `LIBGL_ALWAYS_SOFTWARE=1`.
+- [x] Confirm that no launch file, test, or config uses an absolute host path or assumes a home directory. Everything is found through `ament_index`.
+- [x] End-to-end test time limits are in simulation time, so slow software rendering does not cause false failures.
 
 ### Documentation
 
-- [ ] Docker section in [../setup.md](../setup.md): prerequisites, the commands, the graphics table, how to install the NVIDIA Container Toolkit.
-- [ ] README quick start gains a "With Docker" variant next to the native one.
-- [ ] The README lists the Docker commands.
+- [x] Docker section in [../setup.md](../setup.md): prerequisites, the commands, the graphics table, how to install the NVIDIA Container Toolkit.
+- [x] README quick start gains a "With Docker" variant next to the native one.
+- [x] The README lists the Docker commands.
 
 ### Continuous integration (optional)
 
-- [ ] GitHub Actions workflow: build the `runtime` stage, run the `test` service on every push; run `test-e2e` on pull requests to `main`.
-- [ ] Cache image layers between runs.
+- [x] GitHub Actions workflow: build the `runtime` stage, run the `test` service on every push to `main` and every pull request; run `test-e2e` on pull requests to `main`.
+- [x] Cache image layers between runs.
 
 ## Files created
 
