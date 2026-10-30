@@ -1,6 +1,6 @@
 # Node interfaces
 
-Planned topics, actions, messages, and parameters. Defaults here are starting values; tuning during M4 and M5 may change them, and this file must be updated when they do.
+Topics, actions, messages and parameters as built. The parameter defaults below were checked against the values the nodes declare and against the YAML files in `config/` (M6); update this file whenever a default changes.
 
 ## Topics
 

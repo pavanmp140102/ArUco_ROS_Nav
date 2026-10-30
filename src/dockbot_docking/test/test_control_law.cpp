@@ -45,6 +45,7 @@ Eigen::Isometry3d marker_pose(double x, double y, double normal_yaw)
   return sim.true_pose();
 }
 
+/// Wrap an angle to [-pi, pi], so heading and bearing errors compare without 2*pi jumps.
 double wrap(double a) {return std::atan2(std::sin(a), std::cos(a));}
 
 }  // namespace

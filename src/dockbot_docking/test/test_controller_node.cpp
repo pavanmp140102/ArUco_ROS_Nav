@@ -92,6 +92,7 @@ struct Fixture
   std::vector<dockbot_interfaces::msg::DockingState> states;
 };
 
+/// Build a /dock goal for a marker ID, with optional overrides of the stop distance and timeout.
 Dock::Goal make_goal(int id, float dock_distance = 0.0f, float timeout = 0.0f)
 {
   Dock::Goal g;
@@ -106,7 +107,9 @@ Dock::Goal make_goal(int id, float dock_distance = 0.0f, float timeout = 0.0f)
 class ControllerNode : public ::testing::Test
 {
 protected:
+  /// Start rclcpp once for the suite, so each test can create the controller node it needs.
   static void SetUpTestSuite() {rclcpp::init(0, nullptr);}
+  /// Shut rclcpp down after the suite so no node outlives the tests.
   static void TearDownTestSuite() {rclcpp::shutdown();}
 };
 
