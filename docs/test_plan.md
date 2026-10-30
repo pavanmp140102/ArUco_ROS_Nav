@@ -41,7 +41,7 @@ Measured from Gazebo ground truth (robot pose) and `config/markers.yaml` (marker
 
 ## Perception unit (P)
 
-Inputs are synthetic images: a marker image warped into a blank frame (`cv::warpPerspective`) by projecting its corners with known intrinsics (the planned camera's: 1280x720, focal length 1061 px) and a known pose. The renderer is a C++ test helper. No ROS involved.
+Inputs are synthetic images: a marker image warped into a blank frame (`cv::warpPerspective`) by projecting its corners with known intrinsics (the camera's: 1280x720, focal length 1061 px) and a known pose. The renderer is a C++ test helper. No ROS involved.
 
 | ID | Case | Pass criterion |
 |---|---|---|
@@ -50,7 +50,7 @@ Inputs are synthetic images: a marker image warped into a blank frame (`cv::warp
 | P3 | Three markers with different IDs in one frame | All three IDs returned, each pose within P1 bounds |
 | P4 | Marker from a different dictionary; a mirrored marker | Neither is reported |
 | P5 | Marker cut off by the image edge; marker with one corner covered | Not reported. No pose with wild values |
-| P6 | Optical frame to `base_link` conversion with the planned camera mount | A marker 1 m straight ahead of the camera, facing it, gives x = 0.95 m in `base_link` (the camera sits 0.05 m behind it), y = 0, bearing = 0, and a normal pointing back at the robot |
+| P6 | Optical frame to `base_link` conversion with the camera mount | A marker 1 m straight ahead of the camera, facing it, gives x = 0.95 m in `base_link` (the camera sits 0.05 m behind it), y = 0, bearing = 0, and a normal pointing back at the robot |
 | P7 | Detection wrapper on the installed OpenCV | Returns corners and IDs in the documented shape. The version branch is chosen at compile time, so the branch for 4.7 and later is verified by building and running the same tests against a newer OpenCV when one is available |
 | P8 | Ambiguity handling: marker nearly face-on at 3 m | The solution with lower reprojection error is chosen; the normal points toward the camera, not away |
 

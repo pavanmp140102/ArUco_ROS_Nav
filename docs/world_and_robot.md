@@ -29,7 +29,7 @@ Dimensions here are the design targets. The Xacro, the world file, and `config/m
 | Vertical field of view | 37.5 degrees |
 | Frame rate | 30 Hz |
 | Frame | `camera_optical_frame`, set as the sensor's `gz_frame_id` |
-| Noise | None initially. Gaussian noise is added for robustness tests in M5 |
+| Noise | None by default. The `camera_noise` launch argument adds Gaussian noise of that standard deviation (test E11 uses it) |
 | Distortion | None. A real IMX219 lens distorts; see the real camera item in M7 |
 
 Width, height, field of view, and rate are Xacro arguments with the values above as defaults. The launch files expose `camera_rate` so that slow renderers (software rendering in CI) can lower it. The detector takes its intrinsics from `CameraInfo`, so no node depends on these numbers.
