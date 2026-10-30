@@ -2,7 +2,8 @@
 #   base    : ROS 2 Jazzy plus every dependency declared in the package.xml files
 #   dev     : base plus development tools and a non-root user matching the host
 #   runtime : base plus the source tree built in Release mode
-ARG ROS_IMAGE=ros:jazzy-ros-base
+# Pinned by digest (2026-10-30) so every machine builds from the same base; see docs/setup.md.
+ARG ROS_IMAGE=ros:jazzy-ros-base@sha256:8eed0a4669bbf43ee331878a4c39bd8ebddea8e3312a58b4fae8edb14526b617
 
 # Keeps only the package.xml files. The next stage copies from here, so its cache key depends
 # on the manifests alone and editing source files does not rerun the dependency install.

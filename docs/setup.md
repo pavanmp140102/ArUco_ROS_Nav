@@ -64,7 +64,7 @@ nvtop                      # live view of both GPUs
 
 ## Docker
 
-Docker is the way to run the project on a machine without ROS 2 installed. The image design and the list of services are in [plan/M8_docker.md](plan/M8_docker.md); all five services (`test`, `test-e2e`, `sim`, `sim-nvidia`, `dev`) and `docker/run.sh` are defined. `test-e2e`, `sim` and `sim-nvidia` launch `dockbot_bringup`, so they become usable when M5 lands.
+Docker is the way to run the project on a machine without ROS 2 installed. The image design and the list of services are in [plan/M8_docker.md](plan/M8_docker.md); all five services (`test`, `test-e2e`, `sim`, `sim-nvidia`, `dev`) and `docker/run.sh` are defined.
 
 What a machine needs:
 
@@ -114,3 +114,5 @@ docker compose -f docker/compose.yaml exec sim \
 ```
 
 Expect the image to take 3 to 4 GB of disk.
+
+The base image is pinned by digest in `docker/Dockerfile`: `ros:jazzy-ros-base@sha256:8eed0a4669bbf43ee331878a4c39bd8ebddea8e3312a58b4fae8edb14526b617`, recorded on 2026-10-30, the image the tests below were run on. To move to a newer base, pull `ros:jazzy-ros-base`, read its digest with `docker buildx imagetools inspect ros:jazzy-ros-base`, run both test services, then replace the digest.
