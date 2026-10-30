@@ -208,6 +208,7 @@ class DemoRecorder(Node):
             cv2.rectangle(panel, (14, y - 24), (PANEL_W - 14, y + 12), color, -1)
             put(panel, STATE_NAMES.get(s.state, '?'), (24, y + 2), 0.8, (20, 20, 20), 2)
             # The errors are NaN until the target has been seen, so they are shown as a dash.
+
             def show(value, fmt):
                 return fmt % value if np.isfinite(value) else '-'
 
@@ -298,7 +299,7 @@ def main():
     parser.add_argument('--speed', type=float, default=2.0,
                         help='playback speed relative to simulation time, shown on screen')
     parser.add_argument('--output', default='docs/demo/dockbot_demo.mp4')
-    parser.add_argument('--raw-dir', help='also save every frame\'s parts and a state log here')
+    parser.add_argument('--raw-dir', help="also save every frame's parts and a state log here")
     args = parser.parse_args()
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
     if args.raw_dir:
@@ -310,8 +311,8 @@ def main():
                               stderr=subprocess.DEVNULL)
     writer = subprocess.Popen(
         ['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'bgr24',
-         '-s', '%dx%d' % (WIDTH, HEIGHT), '-r', str(args.fps * args.speed), '-i', '-', '-c:v', 'libx264',
-         '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart', args.output],
+         '-s', '%dx%d' % (WIDTH, HEIGHT), '-r', str(args.fps * args.speed), '-i', '-',
+         '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart', args.output],
         stdin=subprocess.PIPE)
     rclpy.init()
     node = DemoRecorder(writer, args.fps, args.speed, args.raw_dir)
