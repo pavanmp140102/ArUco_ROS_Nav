@@ -6,15 +6,15 @@
 
 ## Sub-tasks
 
-- [ ] `README.md`: what the project is, prerequisites (apt packages), build, the one-command demo, how to send a goal to a different marker, how to run the tests, a screenshot or short clip.
+- [x] `README.md`: what the project is, prerequisites (apt packages), build, the one-command demo, how to send a goal to a different marker, how to run the tests, a screenshot or short clip.
 - [ ] Bring [../architecture.md](../architecture.md) in line with the code: remove "planned" wording, add the trajectory plot from M4 and a screenshot of the RViz view.
-- [ ] Bring [../interfaces.md](../interfaces.md) in line: final parameter defaults, any topics added or dropped.
-- [ ] Bring [../world_and_robot.md](../world_and_robot.md) in line: final obstacle layout, a top-down image of the world.
-- [ ] Add the results table to [../test_plan.md](../test_plan.md).
-- [ ] Update the README: status, real commands, where things live.
-- [ ] Audit function comments: every function, in C++ headers and in the Python launch and test files, says what it does and how it contributes to docking.
-- [ ] Bring [../setup.md](../setup.md) in line: confirmed package list, measured GPU numbers.
-- [ ] Demo script or documented command sequence: launch, dock to ID 4, then dock to ID 0.
+- [x] Bring [../interfaces.md](../interfaces.md) in line: final parameter defaults, any topics added or dropped.
+- [x] Bring [../world_and_robot.md](../world_and_robot.md) in line: final obstacle layout, a top-down image of the world.
+- [x] Add the results table to [../test_plan.md](../test_plan.md).
+- [x] Update the README: status, real commands, where things live.
+- [x] Audit function comments: every function, in C++ headers and in the Python launch and test files, says what it does and how it contributes to docking.
+- [x] Bring [../setup.md](../setup.md) in line: confirmed package list, measured GPU numbers.
+- [x] Demo script or documented command sequence: launch, dock to ID 4, then dock to ID 0.
 
 ## Gate
 
