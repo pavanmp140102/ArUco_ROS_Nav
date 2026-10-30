@@ -171,7 +171,7 @@ These prove the project runs on a machine that has only Docker. Details of the i
 
 | ID | Check |
 |---|---|
-| MAN1 | RViz shows the robot model, the debug image with marker outlines and axes, the `aruco_<id>` frames, and the docking state |
+| MAN1 | RViz shows the robot model, the camera image, the debug image with marker outlines and axes, and the `aruco_<id>` frames. The docking state is read from `/docking/state` (`ros2 topic echo /docking/state`), because RViz has no display for a custom message. Checked 2026-10-30 during a dock to marker 4: the debug image and the marker frame were live, and the state stream showed APPROACH with the target ID, distance and lateral error |
 | MAN2 | The README quick start works on a fresh clone: build, one launch command, one action goal, robot docks |
 | MAN3 | Teleoperation drives the robot and the odometry arrow in RViz follows it |
 

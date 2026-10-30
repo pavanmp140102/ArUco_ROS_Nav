@@ -7,7 +7,7 @@
 ## Sub-tasks
 
 - [x] `README.md`: what the project is, prerequisites (apt packages), build, the one-command demo, how to send a goal to a different marker, how to run the tests, a screenshot or short clip.
-- [ ] Bring [../architecture.md](../architecture.md) in line with the code: remove "planned" wording, add the trajectory plot from M4 and a screenshot of the RViz view.
+- [x] Bring [../architecture.md](../architecture.md) in line with the code: no "planned" wording, the trajectory plot from M4 is in. An RViz screenshot taken during a dock (`docs/images/rviz_docking.png`) is left for later.
 - [x] Bring [../interfaces.md](../interfaces.md) in line: final parameter defaults, any topics added or dropped.
 - [x] Bring [../world_and_robot.md](../world_and_robot.md) in line: final obstacle layout, a top-down image of the world.
 - [x] Add the results table to [../test_plan.md](../test_plan.md).
@@ -18,7 +18,7 @@
 
 ## Gate
 
-- MAN1: RViz shows the model, debug image, marker frames, and docking state.
+- MAN1: RViz shows the model, camera and debug images and the marker frames; the docking state is read from `/docking/state` (checked, see the test plan).
 - MAN2: the README quick start works on a fresh clone in a clean shell.
 - No document under `docs/` contradicts the code. Check by grepping each parameter default in `interfaces.md` against the YAML files.
 
