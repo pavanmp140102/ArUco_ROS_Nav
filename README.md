@@ -86,9 +86,9 @@ ros2 action send_goal /dock dockbot_interfaces/action/Dock "{marker_id: 2}" --fe
 
 ```bash
 docker compose -f docker/compose.yaml run --rm test     # fast tests inside the container
-docker compose -f docker/compose.yaml run --rm test-e2e # Gazebo end-to-end tests, headless (needs M5)
+docker compose -f docker/compose.yaml run --rm test-e2e # Gazebo end-to-end tests, headless
 docker compose -f docker/compose.yaml run --rm dev      # development shell with the source mounted
-./docker/run.sh                                         # GUI demo; picks the NVIDIA service when available (needs M5)
+./docker/run.sh                                         # GUI demo; picks the NVIDIA service when available
 ```
 
 `WORLD` and `MARKER_ID` environment variables select the world and the marker to dock at. See [docs/setup.md](docs/setup.md#docker) for graphics options and the NVIDIA Container Toolkit.

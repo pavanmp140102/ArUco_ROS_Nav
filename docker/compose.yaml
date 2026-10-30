@@ -16,6 +16,11 @@ x-display: &display
     MARKER_ID: ${MARKER_ID:-}
   volumes:
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+# The GUI services also get the host GPU device nodes. dev does not, so it starts on hosts
+# without /dev/dri.
+x-gui: &gui
+  <<: *display
   devices:
     - /dev/dri:/dev/dri
 
@@ -45,6 +50,7 @@ services:
     environment:
       <<: *common-env
       LIBGL_ALWAYS_SOFTWARE: "1"
+      DOCKBOT_GPU: software
       E2E_XVFB: ${E2E_XVFB:-0}
     command: >
       bash -c 'if [ "$$E2E_XVFB" = 1 ]; then RUN="xvfb-run -a"; fi;
@@ -53,7 +59,7 @@ services:
 
   # Full demo with Gazebo GUI and RViz on an Intel or AMD GPU. Set MARKER_ID to dock at start-up.
   sim:
-    <<: *display
+    <<: *gui
     build: *runtime-build
     image: dockbot:runtime
     command: >
@@ -62,7 +68,7 @@ services:
 
   # Same demo rendered on an NVIDIA GPU. Needs the NVIDIA Container Toolkit on the host.
   sim-nvidia:
-    <<: *display
+    <<: *gui
     build: *runtime-build
     image: dockbot:runtime
     gpus: all

@@ -1,12 +1,18 @@
 # Builds the runtime image and runs the tests in it (see docs/plan/M8_docker.md).
-#   every push        : unit and lint tests (the `test` service)
-#   pull request->main: also the headless Gazebo end-to-end suite (the `test-e2e` service)
+#   push to main      : unit and lint tests (the `test` service)
+#   pull request->main: the same, and also the headless Gazebo end-to-end suite (the `test-e2e` service)
 name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
     branches: [main]
+
+# A newer push to the same branch makes the older, superseded run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:

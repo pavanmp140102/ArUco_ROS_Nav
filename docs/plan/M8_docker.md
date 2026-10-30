@@ -85,7 +85,7 @@ Showing windows on the host requires allowing local containers to use the displa
 
 ### Continuous integration (optional)
 
-- [x] GitHub Actions workflow: build the `runtime` stage, run the `test` service on every push; run `test-e2e` on pull requests to `main`.
+- [x] GitHub Actions workflow: build the `runtime` stage, run the `test` service on every push to `main` and every pull request; run `test-e2e` on pull requests to `main`.
 - [x] Cache image layers between runs.
 
 ## Files created

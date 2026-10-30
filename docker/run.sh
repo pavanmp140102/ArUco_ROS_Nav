@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start the GUI demo in Docker: allow the container to use the display, pick the NVIDIA service
 # when the NVIDIA runtime is available (else the Intel/AMD one), and bring it up.
-# Usage: ./docker/run.sh [software]    WORLD and MARKER_ID may be set in the environment.
+# Usage: ./docker/run.sh    WORLD and MARKER_ID may be set in the environment.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 COMPOSE=(docker compose -f docker/compose.yaml)
@@ -12,13 +12,17 @@ if [ -z "${DISPLAY:-}" ]; then
 fi
 if ! command -v xhost >/dev/null; then
   echo "xhost not found (install x11-xserver-utils); the container may not reach the display." >&2
-else
-  xhost +local:docker >/dev/null
+elif xhost 2>/dev/null | grep -qi 'LOCAL:'; then
+  : # access was already granted (for example by another container); leave it as it is on exit
+elif xhost +local:docker >/dev/null; then
   trap 'xhost -local:docker >/dev/null' EXIT
+else
+  echo "xhost could not allow local containers; the GUI may not open." >&2
 fi
 
 service=sim
-if docker info 2>/dev/null | grep -qi 'runtimes:.*nvidia'; then
+docker_info=$(docker info 2>/dev/null || true)  # captured first: grep -q would SIGPIPE the pipe
+if grep -qi 'runtimes:.*nvidia' <<<"$docker_info"; then
   service=sim-nvidia
 elif command -v nvidia-smi >/dev/null; then
   echo "NVIDIA GPU found but the NVIDIA Container Toolkit is not set up; using the Intel/AMD service."
