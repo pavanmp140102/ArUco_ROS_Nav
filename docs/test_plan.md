@@ -153,6 +153,20 @@ These prove the project runs on a machine that has only Docker. Details of the i
 | DK8 | Clone and run DK2 and DK4 on a second machine, ideally one with a different GPU or CPU architecture | Both pass with no steps beyond those in the README. Run when such a machine is available |
 | DK9 | `sim-nvidia` service on a machine with an NVIDIA GPU | Same result as DK4, and `nvtop` or `nvidia-smi` on the host shows the Gazebo process on the NVIDIA GPU |
 
+### Docker results (M8, October 2026)
+
+| ID | Result |
+|---|---|
+| DK1 | Not run: the image was built incrementally, not with `--no-cache` from a fresh clone |
+| DK2 | Passed: the `test` service, no display and no GPU, 219 tests and 0 failures in 7 of 9 runs. The other two runs each had a flaky test (a parallel-package ROS-domain clash, fixed by running packages one at a time, and `BackToBackGoalsAllReturnResults`, which then passed 46 further runs). The negative case (a deliberately broken test gives a non-zero exit code) was not run |
+| DK3 | Passed: E1 to E12, software rendering, 27 minutes, no result retries |
+| DK4 | Passed: Gazebo and RViz opened on the host and the robot docked on marker 2 through `sim` |
+| DK5 | Partly: files made by `dev` in the mounted tree belong to the host user. A full workspace build in the mounted tree was not run, to leave the host's `build/` and `install/` alone |
+| DK6 | Passed: after a source-only change every layer up to the workspace build came from cache and `rosdep` did not run again |
+| DK7 | Passed: `rosdep check` reports all dependencies satisfied; the Dockerfile installs no ROS package by hand (only `xvfb`, `mesa-utils` and the development tools) |
+| DK8 | Not run: needs a second machine |
+| DK9 | Passed: `sim-nvidia` and `docker/run.sh` docked on marker 2 with the NVIDIA GPU at about half load |
+
 ## Manual checks (MAN)
 
 | ID | Check |
