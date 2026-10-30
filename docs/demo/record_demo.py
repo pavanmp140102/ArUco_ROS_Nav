@@ -23,11 +23,14 @@ The script adds a third-person camera to the running world, sends the /dock goal
 the other, and writes each frame from simulation time, so the video plays at real speed even
 when the simulator runs slower than real time. Each frame shows the third-person view, what
 the robot's own camera sees with the detector's overlay, and the docking state as published
-by the controller. It needs ffmpeg and a sourced ROS 2 workspace, and GZ_IP set where the
-machine needs it for Gazebo discovery.
+by the controller. With --raw-dir it also saves every frame's separate parts (the third-person
+view, the robot's view and the state, as a log), which make_linkedin_video.py arranges into a
+short video for a social post. It needs ffmpeg and a sourced ROS 2 workspace, and GZ_IP set
+where the machine needs it for Gazebo discovery.
 """
 
 import argparse
+import json
 import os
 import signal
 import subprocess
@@ -47,6 +50,7 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image
 
 WIDTH, HEIGHT = 1280, 720
+CAMERA_W, CAMERA_H = 1080, 884  # the third-person camera's resolution
 OVERVIEW_W = 880          # the third-person view fills the left part of each frame
 PANEL_W = WIDTH - OVERVIEW_W
 STATE_NAMES = {0: 'IDLE', 1: 'SEARCH', 2: 'APPROACH', 3: 'FINAL', 4: 'RECOVER', 5: 'DOCKED',
@@ -62,11 +66,11 @@ OVERVIEW_SDF = """<?xml version="1.0"?>
 <sdf version="1.9">
   <model name="overview_camera">
     <static>true</static>
-    <pose>-3.3 3.3 3.6 0 0.505 -0.678</pose>
+    <pose>-3.3 3.3 3.6 0 0.47 -0.62</pose>
     <link name="link">
       <sensor name="overview" type="camera">
         <camera>
-          <horizontal_fov>1.0</horizontal_fov>
+          <horizontal_fov>0.8</horizontal_fov>
           <image><width>%d</width><height>%d</height><format>R8G8B8</format></image>
           <clip><near>0.1</near><far>30</far></clip>
         </camera>
@@ -77,7 +81,7 @@ OVERVIEW_SDF = """<?xml version="1.0"?>
     </link>
   </model>
 </sdf>
-""" % (OVERVIEW_W, HEIGHT)
+""" % (CAMERA_W, CAMERA_H)
 
 
 def gz_service(world, name, req_type, request):
@@ -134,12 +138,16 @@ def put(img, text, org, scale=0.6, color=(255, 255, 255), thick=1):
 class DemoRecorder(Node):
     """Collect the camera views and the docking state, and write one video frame per tick."""
 
-    def __init__(self, writer, fps, speed):
+    def __init__(self, writer, fps, speed, raw_dir=None):
         """Subscribe to the views and the controller state, and start the frame timer."""
         super().__init__('demo_recorder', parameter_overrides=[
             Parameter('use_sim_time', value=True)])
         self.writer = writer
         self.speed = speed
+        self.raw_dir = raw_dir
+        self.goal = None      # marker ID of the goal being docked to, None between goals
+        self.result = None    # outcome and gap of the goal that just ended
+        self.log = open(os.path.join(raw_dir, 'log.jsonl'), 'w') if raw_dir else None
         self.overview = self.debug = self.raw = None
         self.debug_time = -10.0
         self.state = None
@@ -217,10 +225,34 @@ class DemoRecorder(Node):
             label += '   (video at %gx speed)' % self.speed
         put(panel, label, (14, HEIGHT - 16), 0.5, (140, 140, 140))
 
+    def save_raw(self):
+        """Save this frame's parts and a log line, for arranging into another layout later."""
+        n = self.frames
+        cv2.imwrite(os.path.join(self.raw_dir, 'overview_%05d.jpg' % n), self.overview,
+                    [cv2.IMWRITE_JPEG_QUALITY, 90])
+        view = cv2.resize(self.robot_view(), (640, 360), interpolation=cv2.INTER_AREA)
+        cv2.imwrite(os.path.join(self.raw_dir, 'robot_%05d.jpg' % n), view,
+                    [cv2.IMWRITE_JPEG_QUALITY, 88])
+        s = self.state
+
+        def number(value):
+            return float(value) if s is not None and np.isfinite(value) else None
+
+        self.log.write(json.dumps({
+            'frame': n, 't': round(self.now(), 3), 'goal': self.goal, 'result': self.result,
+            'state': None if s is None else int(s.state),
+            'visible': None if s is None else bool(s.target_visible),
+            'range_cm': number(s.distance_to_dock * 100) if s is not None else None,
+            'lateral_cm': number(s.lateral_error * 100) if s is not None else None,
+            'heading_deg': number(np.degrees(s.heading_error)) if s is not None else None,
+            }) + '\n')
+
     def on_frame(self):
         """Compose the third-person view and the panel into one frame and write it."""
         if self.overview is None:
             return
+        if self.raw_dir:
+            self.save_raw()
         frame = np.zeros((HEIGHT, WIDTH, 3), np.uint8)
         frame[:, :OVERVIEW_W] = cv2.resize(self.overview, (OVERVIEW_W, HEIGHT))
         self.draw_panel(frame[:, OVERVIEW_W:])
@@ -238,6 +270,7 @@ def wait_sim(node, seconds):
 def dock(node, client, marker_id, index, total):
     """Send one /dock goal, narrate it on screen, and return its result."""
     node.caption = ['Goal %d of %d: dock to marker %d' % (index, total, marker_id)]
+    node.goal, node.result = marker_id, None
     future = client.send_goal_async(Dock.Goal(marker_id=marker_id))
     while not future.done():
         time.sleep(0.05)
@@ -252,6 +285,7 @@ def dock(node, client, marker_id, index, total):
     outcome = OUTCOMES.get(result.outcome, str(result.outcome))
     node.caption = ['Marker %d: %s' % (marker_id, outcome),
                     'front face %.1f cm from the marker' % (result.final_distance * 100)]
+    node.result = {'outcome': outcome, 'gap_cm': round(result.final_distance * 100, 1)}
     return result
 
 
@@ -264,8 +298,11 @@ def main():
     parser.add_argument('--speed', type=float, default=2.0,
                         help='playback speed relative to simulation time, shown on screen')
     parser.add_argument('--output', default='docs/demo/dockbot_demo.mp4')
+    parser.add_argument('--raw-dir', help='also save every frame\'s parts and a state log here')
     args = parser.parse_args()
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+    if args.raw_dir:
+        os.makedirs(args.raw_dir, exist_ok=True)
 
     spawn_overview_camera(args.world)
     bridge = subprocess.Popen(['ros2', 'run', 'ros_gz_image', 'image_bridge', '/overview/image'],
@@ -277,7 +314,7 @@ def main():
          '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart', args.output],
         stdin=subprocess.PIPE)
     rclpy.init()
-    node = DemoRecorder(writer, args.fps, args.speed)
+    node = DemoRecorder(writer, args.fps, args.speed, args.raw_dir)
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
     threading.Thread(target=executor.spin, daemon=True).start()
@@ -297,6 +334,8 @@ def main():
             wait_sim(node, 3.0)
     finally:
         executor.shutdown()
+        if node.log:
+            node.log.close()
         node.destroy_node()
         rclpy.shutdown()
         writer.stdin.close()
