@@ -91,6 +91,19 @@ ros2 launch dockbot_bringup dock.launch.py world:=single_dock x:=1.0 marker_id:=
 
 The robot alone, in an empty world: `ros2 launch dockbot_gazebo sim.launch.py` (`headless:=true` for no GUI, `gpu:=nvidia|software` to pick the renderer).
 
+## Demo video
+
+[![dockbot docking to marker 4, then to marker 0: click to play](docs/demo/dockbot_demo.png)](docs/demo/dockbot_demo.mp4)
+
+The robot docks to marker 4, then to marker 0 (63 seconds, played at 2x speed). The left side is a third-person camera added to the running world; the right side is what the robot's own camera sees with the detector's overlay (the marker outline and axes), and the controller's state, range, sideways offset and heading error as they update. The first dock includes a RECOVER step, where the robot backs off and retries when its approach is not aligned well enough. Both docks end with the front face about 10 cm from the marker.
+
+To make it again, start the simulation and run the recorder from a second terminal (it needs `ffmpeg`; it records from simulation time and never captures the desktop):
+
+```bash
+ros2 launch dockbot_bringup dock.launch.py world:=docking_world headless:=true
+python3 docs/demo/record_demo.py --goals 4 0 --output docs/demo/dockbot_demo.mp4 --speed 2
+```
+
 ## Docker
 
 ```bash
